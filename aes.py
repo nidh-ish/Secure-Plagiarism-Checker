@@ -271,7 +271,7 @@ class AES:
 
         return key
 
-    def circuit(self, key, message):
+    def circuit(self, key: bitarray(128), message: bitarray(128)):
         
         state = message ^ key # Key Addition
         

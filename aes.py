@@ -256,67 +256,132 @@ class AES:
         input[16:24] = v3
         input[24:32] = v0
 
-        for i in range(4):
-            temp = self.SBox(input[8*i:8*i + 8], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
-            input[8*i:8*i + 8] = temp[0] ^ temp[1]
-        v0 = input[0:8]
-        # round = bin(round)[2:].zfill(8)
+        output = []
 
-        v0 = v0 ^ self.R(round - 1)
+        if S.id() == 0:
+            input1 = bitarray(32)
+            input2 = bitarray(32)
+            for i in range(4):
+                temp = self.SBox(input[8*i:8*i + 8], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
+                input1[8*i:8*i + 8] = temp[0]
+                input2[8*i:8*i + 8] = temp[1]
+            v01 = input1[0:8]
+            v02 = input2[0:8]
+            v01 = v01 ^ self.R(round - 1)
+            v02 = v02 ^ self.R(round - 1)
+            input1[0:8] = v01
+            input2[0:8] = v02
+            output.append(input1)
+            output.append(input2)
+            # print("00: ", input1, "\n01: ", input2)
+            # exit(0)
 
-        input[0:8] = v0
+        else:
+            for i in range(4):
+                input[8*i:8*i + 8] = self.SBox(input[8*i:8*i + 8], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
+            v0 = input[0:8]
+            v0 = v0 ^ self.R(round - 1)
+            input[0:8] = v0
+            # print(S.id(), input)
+            # exit(0)
+            output.append(input)
         
-        return input
+        return output
 
     def KeyGen(self, key: bitarray, round, S: Server) -> bitarray:
-        w0 = key[0:32]
-        w1 = key[32:64]
-        w2 = key[64:96]
-        w = key[96:128]
-        w3 = key[96:128]
+        output = []
+        if(S.id() == 0):
+            key1 = key[0]
+            key2 = key[1]
 
-        w0 = w0 ^ self.g(w, round, S)
-        w1 = w0 ^ w1
-        w2 = w1 ^ w2
-        w3 = w2 ^ w3
+            w01 = key1[0:32]
+            w11 = key1[32:64]
+            w21 = key1[64:96]
+            w1 = key1[96:128]
+            w31 = key1[96:128]
 
-        key[0:32] = w0
-        key[32:64] = w1
-        key[64:96] = w2 
-        key[96:128] = w3
+            w02 = key2[0:32]
+            w12 = key2[32:64]
+            w22 = key2[64:96]
+            w2 = key2[96:128]
+            w32 = key2[96:128]
 
-        return key
+            temp = self.g(w1 ^ w2, round, S)
+            w01 = w01 ^ temp[0]
+            w02 = w02 ^ temp[1]
+            
+            w11 = w01 ^ w11
+            w21 = w11 ^ w21
+            w31 = w21 ^ w31
+
+            w12 = w02 ^ w12
+            w22 = w12 ^ w22
+            w32 = w22 ^ w32
+
+            key1 = bitarray(128)
+            key2 = bitarray(128)
+            
+            key1[0:32] = w01
+            key1[32:64] = w11
+            key1[64:96] = w21
+            key1[96:128] = w31
+
+            key2[0:32] = w02
+            key2[32:64] = w12
+            key2[64:96] = w22
+            key2[96:128] = w32
+
+            output.append(key1)
+            output.append(key2)
+            return output
+        
+        else:
+            w0 = key[0:32]
+            w1 = key[32:64]
+            w2 = key[64:96]
+            w = key[96:128]
+            w3 = key[96:128]
+            temp = self.g(w, round, S)
+            w0 = w0 ^ temp[0]
+            w1 = w0 ^ w1
+            w2 = w1 ^ w2
+            w3 = w2 ^ w3
+
+            key[0:32] = w0
+            key[32:64] = w1
+            key[64:96] = w2 
+            key[96:128] = w3
+
+            output.append(key)
+            return output
+        
 
     def circuit(self, key: List[bitarray], message: List[bitarray], S:Server) -> bitarray:
         
         state = None
 
         # For Server 0
-        if S.id() == 0:
-            key_l0 = key[0]
-            key_l1 = key[1]
-
-            message_l0 = message[0]
-            message_l1 = message[1]
-            
+        if S.id() == 0:            
             state = message[0] ^ message[1] ^ key[0] ^ key[1] # Key Addition
+            
         
             for i in range(9):
 
                 for j in range(16):
                     temp = self.SBox(state[8*j:8*(j+1)], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
                     state[8*j:8*(j+1)] = temp[0] ^ temp[1]
-
                 state = self.ShiftRow(state) # Shift Row
                 state = self.MixColumn(state) # Mix Columns
-
-                key[0] = self.KeyGen(key[0], i + 1, S) # Key Generation
-                key[1] = self.KeyGen(key[1], i + 1, S)
-
-                state = state ^ key[0] ^ key[1] # Key Addition
+                
+                temp = self.KeyGen([key[0], key[1]], i + 1, S) # Key Generation
+                key[0] = temp[0]
+                key[1] = temp[1]
+        
+                state = state ^ key[0] # Key Addition
 
             state1 = bitarray(128)
             state2 = bitarray(128)
+
             for i in range(16):
                 temp = self.SBox(state[8*i:8*i + 8], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
                 state1[8*i:8*i + 8] = temp[0]
@@ -324,20 +389,22 @@ class AES:
 
             state1 = self.ShiftRow(state1) # Shift Row
             state2 = self.ShiftRow(state2)
-            
-            key[0] = self.KeyGen(key[0], 10, S) # Final round key generation
-            key[1] = self.KeyGen(key[1], 10, S)
+
+            temp = self.KeyGen([key[0], key[1]], 10, S) # Final round key generation
+            key[0] = temp[0]
+            key[1] = temp[1] 
             
             state1 = state1 ^ key[0] # Key Addition
             state2 = state2 ^ key[1]
 
-            print("Server 0 lambda 1: ", state1)
-            print("Server 0 lambda 2: ", state2)
+            # print("Server0: l1: ", ba2hex(state1), "\nServer0: l2: ", ba2hex(state2))
             return(state, state2)
 
 
         # For Server 1
         if S.id() == 1:
+
+        #Offline begins
             message = message[0]
             key = key[0]
             state = message ^ key # Key Addition
@@ -350,22 +417,97 @@ class AES:
                 state = self.ShiftRow(state) # Shift Row
                 state = self.MixColumn(state) # Mix Columns
 
-                key = self.KeyGen(key, i + 1, S) # Key Generation
+                temp = self.KeyGen(key, i + 1, S) # Key Generation
+                key = temp[0]
 
                 state = state ^ key # Key Addition
+                
 
             for i in range(16):
                 state[8*i:8*i + 8] = self.SBox(state[8*i:8*i + 8], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
 
             state = self.ShiftRow(state) # Shift Row
-            key = self.KeyGen(key, 10, S) # Final round key generation
+            temp = self.KeyGen(key, 10, S) # Final round key generation
+            key = temp[0]
             state = state ^ key # Key Addition
 
-            print("Server 1 lambda 1: ", state)
-            return state
+            # print("Server1: l1: ", ba2hex(state))
+            offline_output = state            
+        #Offline ends
+
+        #Online begins
+            message = message[1]
+            key = key[1]
+            state = message ^ key # Key Addition
+        
+            for i in range(9):
+
+                for j in range(16):
+                    state[8*j:8*(j+1)] = self.SBox(state[8*j:8*(j+1)], S.online_AND, S.online_AND1, S.OR) # Byte Substitution
+
+                state = self.ShiftRow(state) # Shift Row
+                state = self.MixColumn(state) # Mix Columns
+
+                temp = self.KeyGen(key, i + 1, S) # Key Generation
+                key = temp[0]
+
+                state = state ^ key # Key Addition
+                
+
+            for i in range(16):
+                state[8*i:8*i + 8] = self.SBox(state[8*i:8*i + 8], S.online_AND, S.online_AND1, S.OR) # Byte Substitution
+
+            state = self.ShiftRow(state) # Shift Row
+            temp = self.KeyGen(key, 10, S) # Final round key generation
+            key = temp[0]
+            state = state ^ key # Key Addition
+
+            print("Server1: l1: ", ba2hex(state))
+
+            online_output = state
+        #Online ends
+
+            return [offline_output, online_output]
 
         # For Server 2
         if S.id() == 2:
+
+        #Offline begins
+            message = message[1]
+            key = key[1]
+            state = message ^ key # Key Addition
+        
+            for i in range(9):
+
+                for j in range(16):
+                    state[8*j:8*(j+1)] = self.SBox(state[8*j:8*(j+1)], S.offline_AND, S.offline_AND, S.OR) # Byte Substitution
+                
+                state = self.ShiftRow(state) # Shift Row
+                state = self.MixColumn(state) # Mix Columns
+
+                temp = self.KeyGen(key, i + 1, S) # Key Generation
+                key = temp[0]
+
+                state = state ^ key # Key Addition
+                
+
+            for i in range(16):
+                state[8*i:8*i + 8] = self.SBox(state[8*i:8*i + 8], S.offline_AND, S.offline_AND, S.OR) # Byte Substitution
+            
+
+            state = self.ShiftRow(state) # Shift Row
+            temp = self.KeyGen(key, 10, S) # Final round key generation
+            key = temp[0]
+
+            state = state ^ key # Key Addition
+            
+            # print("Server2: l2: ", ba2hex(state))
+        
+            online_output = state
+
+        # Offline ends
+
+        #Online begins
             message = message[0]
             key = key[0]
             state = message ^ key # Key Addition
@@ -374,48 +516,34 @@ class AES:
 
                 for j in range(16):
                     state[8*j:8*(j+1)] = self.SBox(state[8*j:8*(j+1)], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
-
+                
                 state = self.ShiftRow(state) # Shift Row
                 state = self.MixColumn(state) # Mix Columns
 
-                key = self.KeyGen(key, i + 1, S) # Key Generation
+                temp = self.KeyGen(key, i + 1, S) # Key Generation
+                key = temp[0]
 
                 state = state ^ key # Key Addition
+                
 
             for i in range(16):
                 state[8*i:8*i + 8] = self.SBox(state[8*i:8*i + 8], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
+            
 
             state = self.ShiftRow(state) # Shift Row
-            key = self.KeyGen(key, 10, S) # Final round key generation
+            temp = self.KeyGen(key, 10, S) # Final round key generation
+            key = temp[0]
+
             state = state ^ key # Key Addition
+            
+            # print("Server2: l2: ", ba2hex(state))
         
-            print("Server 2 lambda 2: ", state)
-            return state
+            offline_output = state
 
-        # Offline ends here
-        # if(S.id == 0):
-        #     return
-
-        # state = message ^ key # Key Addition
+        #Online ends
         
-        # for i in range(9):
-
-        #     for j in range(16):
-        #         state[8*j:8*(j+1)] = self.SBox(state[8*j:8*(j+1)], S.online_AND) # Byte Substitution
-
-        #     state = self.ShiftRow(state) # Shift Row
-        #     state = self.MixColumn(state) # Mix Columns
-
-        #     key = self.KeyGen(key, i + 1) # Key Generation
-
-        #     state = state ^ key # Key Addition
-
-        # for i in range(16):
-        #     state[8*i:8*i + 8] = self.SBox(state[8*i:8*i + 8], S.online_AND) # Byte Substitution
-
-        # state = self.ShiftRow(state) # Shift Row
-        # key = self.KeyGen(key, 10) # Final round key generation
-        # state = state ^ key # Key Addition
+        return [offline_output, online_output]
+        
 
 if __name__=='__main__':
     # message = bitarray(bin(random.getrandbits(128))[2:].zfill(128))

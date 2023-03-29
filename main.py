@@ -1,4 +1,5 @@
 from server import *
+import threading
 from aes import *
 import multiprocessing
 
@@ -49,15 +50,16 @@ if __name__=='__main__':
     offline_circuit = []
 
     aes = AES()
-    
+    # print("original l1: ", ba2hex(l1))
+    # print("original l2: ", ba2hex(l2))
     # Run the offline phase for each dimension of the fingerprint (128)
 
     manager = multiprocessing.Manager()
     d = manager.dict()
 
     p0 = multiprocessing.Process(target=aes.circuit, args=([k1 , k2], [l1 , l2], S0))
-    p1 = multiprocessing.Process(target=aes.circuit, args=([k1], [l1], S1))
-    p2 = multiprocessing.Process(target=aes.circuit, args=([k2], [l2], S2))
+    p1 = multiprocessing.Process(target=aes.circuit, args=([k1, mk], [l1, m], S1))
+    p2 = multiprocessing.Process(target=aes.circuit, args=([k2, mk], [l2, m], S2))
 
     p0.start()
     p1.start()

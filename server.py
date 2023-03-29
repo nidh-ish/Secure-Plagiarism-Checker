@@ -18,6 +18,8 @@ class Server:
         pass
     def online_AND(self):
         pass
+    def online_AND1(self):
+        pass
     def offline_share(self):
         pass
     def online_share(self):
@@ -72,21 +74,21 @@ class Server0(Server):
 
     def nextp_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandom01))
-        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
+        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
         self.__initRandom01 = x
-        return x
+        return x[0:len]
 
     def prevp_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandom02))
-        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
+        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
         self.__initRandom02 = x
-        return x
+        return x[0:len]
 
     def common_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandomCommon))
-        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
+        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
         self.__initRandomCommon = x
-        return x
+        return x[0:len]
     
     def offline_AND(self, a, b):
         a = bitarray(str(a))
@@ -156,21 +158,21 @@ class Server1(Server):
 
     def nextp_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandom12))
-        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
+        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
         self.__initRandom12 = x
-        return x
+        return x[0:len]
 
     def prevp_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandom10))
-        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
+        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
         self.__initRandom10 = x
-        return x
+        return x[0:len]
 
     def common_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandomCommon))
-        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
+        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
         self.__initRandomCommon = x
-        return x
+        return x[0:len]
     
     def offline_AND(self, a, b):
         a = bitarray(str(a))
@@ -219,6 +221,26 @@ class Server1(Server):
 
         return m1 ^ m2
     
+    def online_AND1(self, a, b):
+        a = bitarray(str(a))
+        b = bitarray(str(b))
+        temp1 = self.__L[1].pop(0)
+        temp2 = self.__L[0].pop(0)
+        temp3 = self.__L[2].pop(0)
+        temp4 = self.__L[3].pop(0)
+
+        m1 = (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
+
+        # Send m1 to Server2
+        self.__mess_next.nextp_send(m1)
+
+        # Receive m2 from Server2
+        m2 = self.__mess_next.nextp_receive()
+        while m2 != None:
+            m2 = self.__mess_next.nextp_receive()
+
+        return [m1 ^ m2]
+    
     def offline_share(self, sharingserver: int):
         if sharingserver == "0":
             lambda1 = self.prevp_randomness(1)
@@ -266,21 +288,21 @@ class Server2(Server):
 
     def nextp_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandom20))
-        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
+        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
         self.__initRandom20 = x
-        return x
+        return x[0:len]
 
     def prevp_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandom21))
-        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
+        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
         self.__initRandom21 = x
-        return x
+        return x[0:len]
 
     def common_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandomCommon))
-        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
+        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
         self.__initRandomCommon = x
-        return x
+        return x[0:len]
 
     def offline_AND(self, a, b):
         a = bitarray(str(a))
@@ -337,6 +359,26 @@ class Server2(Server):
             m1 = self.__mess_prev.prevp_receive()
 
         return m1 ^ m2
+    
+    def online_AND1(self, a, b):
+        a = bitarray(str(a))
+        b = bitarray(str(b))
+        temp1 = self.__L[1].pop(0)
+        temp2 = self.__L[0].pop(0)
+        temp3 = self.__L[2].pop(0)
+        temp4 = self.__L[3].pop(0)
+
+        m2 = (a & b) ^ (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
+
+        # Send m2 to Server1
+        self.__mess_prev.prevp_send(m2)
+
+        # Receive m1 from Server1
+        m1 = self.__mess_prev.prevp_receive()
+        while m1 != None:
+            m1 = self.__mess_prev.prevp_receive()
+
+        return [m1 ^ m2]
     
     def offline_share(self, sharingserver: int):
         if sharingserver == "0":

@@ -38,11 +38,14 @@ class Messenger:
     # S0 calls to send message to S1
     def nextp_send(self, m):
         self.__Q01.put(m)
-        print("  Q1: ", self.__Q01.qsize(), end="")
+        # if self.__Q01.qsize() >= 2:
+        #     print("   prevp", self.__Q01.qsize(), end="")
         
     # S1 calls to send message to S0
     def prevp_send(self, m):
         self.__Q10.put(m)
+        # if self.__Q10.qsize() >= 2:
+        #     print("   prevp", self.__Q10.qsize(), end="")
 
     # S0 calls to receive message from S1
     def nextp_receive(self):

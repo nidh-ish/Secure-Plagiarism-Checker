@@ -1,6 +1,8 @@
 import random
 import numpy as np
 from bitarray import bitarray
+from queue import Queue
+import multiprocessing
 from bitarray.util import *
 
 class Server:
@@ -23,39 +25,38 @@ class Server:
     def offline_share(self):
         pass
     def online_share(self):
-        pass
+        pass    
     def OR(self):
         pass
 
 
 class Messenger:
     def __init__(self):
-        self.__Q01 = []
-        self.__Q10 = []
+        self.__Q01 = multiprocessing.Queue()
+        self.__Q10 = multiprocessing.Queue()
 
     # S0 calls to send message to S1
     def nextp_send(self, m):
-        self.__Q01.append(m)
+        self.__Q01.put(m)
+        print("  Q1: ", self.__Q01.qsize(), end="")
         
     # S1 calls to send message to S0
     def prevp_send(self, m):
-        self.__Q10.append(m)
+        self.__Q10.put(m)
 
     # S0 calls to receive message from S1
     def nextp_receive(self):
-        if len(self.__Q10) == 0:
-            return None
-        else:
-            x = self.__Q10.pop(0)
+        if not self.__Q10.empty():
+            x = self.__Q10.get()
             return x
+        return None
 
     # S0 calls to receive message from S1
     def prevp_receive(self):
-        if len(self.__Q01) == 0:
-            return None
-        else:
-            x = self.__Q01.pop(0)
+        if not self.__Q01.empty():
+            x = self.__Q01.get()
             return x
+        return None
 
 
 class Server0(Server):
@@ -198,6 +199,7 @@ class Server1(Server):
 
         g1 = self.prevp_randomness(1)
         self.__L[3].append(g1)
+
         
         return [lambda_c1]
 
@@ -216,7 +218,7 @@ class Server1(Server):
 
         # Receive m2 from Server2
         m2 = self.__mess_next.nextp_receive()
-        while m2 != None:
+        while m2 == None:
             m2 = self.__mess_next.nextp_receive()
 
         return m1 ^ m2
@@ -236,7 +238,7 @@ class Server1(Server):
 
         # Receive m2 from Server2
         m2 = self.__mess_next.nextp_receive()
-        while m2 != None:
+        while m2 == None:
             m2 = self.__mess_next.nextp_receive()
 
         return [m1 ^ m2]
@@ -256,7 +258,7 @@ class Server1(Server):
     def online_share(self, sharingserver: int, lambda1: bitarray, lambda2: bitarray, message: bitarray) -> bitarray:
         if sharingserver == "0":
             m = self.__mess_prev.prevp_receive()
-            while m != None:
+            while m == None:
                 m = self.__mess_prev.prevp_receive()
         
         if sharingserver == "1":
@@ -265,7 +267,7 @@ class Server1(Server):
 
         if sharingserver == "2":
             m = self.__mess_next.nextp_receive()
-            while m != None:
+            while m == None:
                 m = self.__mess_next.nextp_receive()
         
         return m
@@ -315,7 +317,7 @@ class Server2(Server):
 
         # receive g2 from Server0
         g2 = self.__mess_next.nextp_receive()
-        while g2 != None:
+        while g2 == None:
             g2 = self.__mess_next.nextp_receive()
         
         self.__L[3].append(g2)
@@ -333,7 +335,7 @@ class Server2(Server):
 
         # receive g2 from Server0
         g2 = self.__mess_next.nextp_receive()
-        while g2 != None:
+        while g2 == None:
             g2 = self.__mess_next.nextp_receive()
         
         self.__L[3].append(g2)
@@ -355,7 +357,7 @@ class Server2(Server):
 
         # Receive m1 from Server1
         m1 = self.__mess_prev.prevp_receive()
-        while m1 != None:
+        while m1 == None:
             m1 = self.__mess_prev.prevp_receive()
 
         return m1 ^ m2
@@ -375,7 +377,7 @@ class Server2(Server):
 
         # Receive m1 from Server1
         m1 = self.__mess_prev.prevp_receive()
-        while m1 != None:
+        while m1 == None:
             m1 = self.__mess_prev.prevp_receive()
 
         return [m1 ^ m2]
@@ -395,11 +397,11 @@ class Server2(Server):
     def online_share(self, sharingserver: int, lambda1: bitarray, lambda2: bitarray, message: bitarray) -> bitarray:
         if sharingserver == "0":
             m = self.__mess_next.nextp_receive()
-            while m != None:
+            while m == None:
                 m = self.__mess_next.nextp_receive()
         if sharingserver == "1":
             m = self.__mess_prev.prevp_receive()
-            while m != None:
+            while m == None:
                 m = self.__mess_prev.prevp_receive()
         if sharingserver == "2":
             m = lambda1 + lambda2 + message

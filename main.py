@@ -56,9 +56,13 @@ if __name__=='__main__':
     manager = multiprocessing.Manager()
     d = manager.dict()
 
-    p0 = multiprocessing.Process(target=aes.circuit, args=([k1 , k2], [l1 , l2], S0))
-    p1 = multiprocessing.Process(target=aes.circuit, args=([k1, mk], [l1, m], S1))
-    p2 = multiprocessing.Process(target=aes.circuit, args=([k2, mk], [l2, m], S2))
+    s0 = Share()
+    s1 = Share()
+    s2 = Share()
+
+    p0 = multiprocessing.Process(target=aes.circuit, args=([k1 , k2], [l1 , l2], S0, s0))
+    p1 = multiprocessing.Process(target=aes.circuit, args=([k1, mk], [l1, m], S1, s1))
+    p2 = multiprocessing.Process(target=aes.circuit, args=([k2, mk], [l2, m], S2, s2))
 
     p0.start()
     p1.start()
@@ -68,4 +72,15 @@ if __name__=='__main__':
     p1.join()
     p2.join()
 
+    o0 = s0.get()
+    o1 = s1.get()
+    o2 = s2.get()
+
+    print("0: ", ba2hex(o0[0]), ba2hex(o0[1]) )
+    print("1: ", ba2hex(o1[0]), ba2hex(o1[1]) )
+    print("2: ", ba2hex(o2[0]), ba2hex(o2[1]) )
+
+    print("AES input: ", ba2hex(inp))
+    print("AES key: ", ba2hex(sk))
+    print("AES output: ", ba2hex(o0[0] ^ o0[1] ^ o1[1]))
     # Run the online phase 

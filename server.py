@@ -30,6 +30,23 @@ class Server:
         pass
 
 
+class Share:
+    def __init__(self) -> None:
+        self.__list = multiprocessing.Queue()
+
+    def add(self, m):
+        self.__list.put(m)
+    
+    def get(self):
+        a = self.__list.get()
+        b = self.__list.get()
+        self.__list.put(a)
+        self.__list.put(b)
+        return [a, b]
+    
+    def flush(self):
+        self.__list = multiprocessing.Queue()
+
 class Messenger:
     def __init__(self):
         self.__Q01 = multiprocessing.Queue()

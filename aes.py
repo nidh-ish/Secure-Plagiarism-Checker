@@ -417,7 +417,7 @@ class AES:
                 key[0] = temp[0]
                 key[1] = temp[1]
 
-                state = state ^ key[0] # Key Addition
+                state = state ^ key[0] ^ key[1] # Key Addition
 
             state1 = bitarray(128)
             state2 = bitarray(128)

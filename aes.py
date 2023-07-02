@@ -1,9 +1,4 @@
-import random
-from typing import List
-import numpy as np
 from server import * 
-from bitarray import bitarray
-from bitarray.util import *
 
 class AES:
 
@@ -394,7 +389,7 @@ class AES:
         return output
         
 
-    def circuit(self, k: List[bitarray], m: List[bitarray], S:Server, output: Share) -> bitarray:
+    def circuit(self, k: list[bitarray], m: list[bitarray], S:Server, output: Share) -> bitarray:
         
         state = None
 
@@ -402,8 +397,8 @@ class AES:
         if S.id() == 0:
 
         #Offline begins
-            message = m
-            key = k
+            message = m.copy()
+            key = k.copy()
             state = message[0] ^ message[1] ^ key[0] ^ key[1] # Key Addition
         
             for i in range(9):
@@ -445,8 +440,8 @@ class AES:
         if S.id() == 1:
 
         #Offline begins
-            message = m[0]
-            key = k[0]
+            message = m[0].copy()
+            key = k[0].copy()
             state = message ^ key # Key Addition
 
             for i in range(9):
@@ -476,8 +471,8 @@ class AES:
         #Offline ends
 
         #Online begins
-            message = m[1]
-            key = k[1]
+            message = m[1].copy()
+            key = k[1].copy()
             state = message ^ key # Key Addition
         
             for i in range(9):
@@ -510,8 +505,8 @@ class AES:
         if S.id() == 2:
 
         #Offline begins
-            message = m[0]
-            key = k[0]
+            message = m[0].copy()
+            key = k[0].copy()
             state = message ^ key # Key Addition
         
             for i in range(9):
@@ -541,8 +536,8 @@ class AES:
         # Offline ends
 
         #Online begins
-            message = m[1]
-            key = k[1]
+            message = m[1].copy()
+            key = k[1].copy()
             state = message ^ key # Key Addition
         
             for i in range(9):

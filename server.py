@@ -1,51 +1,7 @@
 import random
-import numpy as np
-from bitarray import bitarray
-from queue import Queue
 import multiprocessing
+from bitarray import bitarray
 from bitarray.util import *
-
-class Server:
-    def id(self):
-        pass
-    def nextp_randomness(self):
-        pass
-    def prevp_randomness(self):
-        pass
-    def common_randomness(self):
-        pass
-    def offline_AND(self):
-        pass
-    def offline_AND1(self):
-        pass
-    def online_AND(self):
-        pass
-    def online_AND1(self):
-        pass
-    def offline_share(self):
-        pass
-    def online_share(self):
-        pass    
-    def OR(self):
-        pass
-
-
-class Share:
-    def __init__(self) -> None:
-        self.__list = multiprocessing.Queue()
-
-    def add(self, m):
-        self.__list.put(m)
-    
-    def get(self):
-        a = self.__list.get()
-        b = self.__list.get()
-        self.__list.put(a)
-        self.__list.put(b)
-        return [a, b]
-    
-    def flush(self):
-        self.__list = multiprocessing.Queue()
 
 class Messenger:
     def __init__(self):
@@ -78,14 +34,63 @@ class Messenger:
             return x
         return None
 
+    def printQueuesStatus(self):
+        print(self.__Q01.qsize(), self.__Q10.qsize())
+
+class Server:
+    def id(self):
+        pass
+    def nextp_randomness(self):
+        pass
+    def prevp_randomness(self):
+        pass
+    def common_randomness(self):
+        pass
+    def offline_AND(self):
+        pass
+    def offline_AND1(self):
+        pass
+    def online_AND(self):
+        pass
+    def online_AND1(self):
+        pass
+    def offline_share(self):
+        pass
+    def online_share(self):
+        pass    
+    def OR(self):
+        pass
+    def printMessengers(self):
+        pass
+    def getnextmessenger(self) -> Messenger:
+        pass
+    def getprevmessenger(self) -> Messenger:
+        pass
+
+class Share:
+    def __init__(self) -> None:
+        self.__list = multiprocessing.Queue()
+
+    def add(self, m):
+        self.__list.put(m)
+    
+    def get(self):
+        a = self.__list.get()
+        b = self.__list.get()
+        self.__list.put(a)
+        self.__list.put(b)
+        return [a, b]
+    
+    def flush(self):
+        self.__list = multiprocessing.Queue()
 
 class Server0(Server):
     def __init__(self, initRandom01, initRandom02, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
         self.__initRandom01 = initRandom01
         self.__initRandom02 = initRandom02
         self.__initRandomCommon = initRandomCommon
-        self.__mess_prev = mess_prev
-        self.__mess_next = mess_next
+        self.messenger_prev = mess_prev
+        self.messenger_next = mess_next
 
     def id(self):
         return 0
@@ -121,7 +126,7 @@ class Server0(Server):
         g2 = (a & b) ^ g1
 
         # Send g2 to Server2
-        self.__mess_prev.prevp_send(g2)
+        self.messenger_prev.prevp_send(g2)
 
         return lambda_c1 ^ lambda_c2
     
@@ -136,7 +141,7 @@ class Server0(Server):
         g2 = (a & b) ^ g1
 
         # Send g2 to Server2
-        self.__mess_prev.prevp_send(g2)
+        self.messenger_prev.prevp_send(g2)
 
         return lambda_c1, lambda_c2
     
@@ -158,9 +163,20 @@ class Server0(Server):
     def online_share(self, sharingserver: int, lambda1: bitarray, lambda2: bitarray, message: bitarray):
         if sharingserver == "0":
             m = lambda1 ^ lambda2 ^ message
-            self.__mess_next.nextp_send(m)
-            self.__mess_prev.prevp_send(m)
+            self.messenger_next.nextp_send(m)
+            self.messenger_prev.prevp_send(m)
 
+    def printMessengers(self):
+        print("S0 to S1", end="")
+        self.messenger_next.printQueuesStatus()
+        print("S0 to S2", end="")
+        self.messenger_prev.printQueuesStatus()
+
+    def getnextmessenger(self) -> Messenger:
+        return self.messenger_next
+
+    def getprevmessenger(self) -> Messenger:
+        return self.messenger_prev
 
 class Server1(Server):
     def __init__(self, initRandom10, initRandom12, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
@@ -168,8 +184,8 @@ class Server1(Server):
         self.__initRandom10 = initRandom10
         self.__initRandom12 = initRandom12
         self.__initRandomCommon = initRandomCommon
-        self.__mess_prev = mess_prev
-        self.__mess_next = mess_next
+        self.messenger_prev = mess_prev
+        self.messenger_next = mess_next
 
     def id(self):
         return 1
@@ -234,12 +250,12 @@ class Server1(Server):
         m1 = (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
 
         # Send m1 to Server2
-        self.__mess_next.nextp_send(m1)
+        self.messenger_next.nextp_send(m1)
 
         # Receive m2 from Server2
-        m2 = self.__mess_next.nextp_receive()
+        m2 = self.messenger_next.nextp_receive()
         while m2 == None:
-            m2 = self.__mess_next.nextp_receive()
+            m2 = self.messenger_next.nextp_receive()
 
         return m1 ^ m2
     
@@ -254,12 +270,12 @@ class Server1(Server):
         m1 = (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
 
         # Send m1 to Server2
-        self.__mess_next.nextp_send(m1)
+        self.messenger_next.nextp_send(m1)
 
         # Receive m2 from Server2
-        m2 = self.__mess_next.nextp_receive()
+        m2 = self.messenger_next.nextp_receive()
         while m2 == None:
-            m2 = self.__mess_next.nextp_receive()
+            m2 = self.messenger_next.nextp_receive()
 
         return [m1 ^ m2]
     
@@ -277,21 +293,32 @@ class Server1(Server):
 
     def online_share(self, sharingserver: int, lambda1: bitarray, lambda2: bitarray, message: bitarray) -> bitarray:
         if sharingserver == "0":
-            m = self.__mess_prev.prevp_receive()
+            m = self.messenger_prev.prevp_receive()
             while m == None:
-                m = self.__mess_prev.prevp_receive()
+                m = self.messenger_prev.prevp_receive()
         
         if sharingserver == "1":
             m = lambda1 ^ lambda2 ^ message
-            self.__mess_next.nextp_send(m)
+            self.messenger_next.nextp_send(m)
 
         if sharingserver == "2":
-            m = self.__mess_next.nextp_receive()
+            m = self.messenger_next.nextp_receive()
             while m == None:
-                m = self.__mess_next.nextp_receive()
+                m = self.messenger_next.nextp_receive()
         
         return m
 
+    def printMessengers(self):
+        print("S1 to S2", end="")
+        self.messenger_next.printQueuesStatus()
+        print("S1 to S0", end="")
+        self.messenger_prev.printQueuesStatus()
+
+    def getnextmessenger(self) -> Messenger:
+        return self.messenger_next
+
+    def getprevmessenger(self) -> Messenger:
+        return self.messenger_prev
 
 class Server2(Server):
     def __init__(self, initRandom20, initRandom21, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
@@ -299,8 +326,8 @@ class Server2(Server):
         self.__initRandom20 = initRandom20
         self.__initRandom21 = initRandom21
         self.__initRandomCommon = initRandomCommon
-        self.__mess_prev = mess_prev
-        self.__mess_next = mess_next
+        self.messenger_prev = mess_prev
+        self.messenger_next = mess_next
 
     def id(self):
         return 2 
@@ -336,9 +363,9 @@ class Server2(Server):
         self.__L[2].append(lambda_c2)
 
         # receive g2 from Server0
-        g2 = self.__mess_next.nextp_receive()
+        g2 = self.messenger_next.nextp_receive()
         while g2 == None:
-            g2 = self.__mess_next.nextp_receive()
+            g2 = self.messenger_next.nextp_receive()
         
         self.__L[3].append(g2)
         
@@ -354,9 +381,9 @@ class Server2(Server):
         self.__L[2].append(lambda_c2)
 
         # receive g2 from Server0
-        g2 = self.__mess_next.nextp_receive()
+        g2 = self.messenger_next.nextp_receive()
         while g2 == None:
-            g2 = self.__mess_next.nextp_receive()
+            g2 = self.messenger_next.nextp_receive()
         
         self.__L[3].append(g2)
         
@@ -373,12 +400,12 @@ class Server2(Server):
         m2 = (a & b) ^ (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
 
         # Send m2 to Server1
-        self.__mess_prev.prevp_send(m2)
+        self.messenger_prev.prevp_send(m2)
 
         # Receive m1 from Server1
-        m1 = self.__mess_prev.prevp_receive()
+        m1 = self.messenger_prev.prevp_receive()
         while m1 == None:
-            m1 = self.__mess_prev.prevp_receive()
+            m1 = self.messenger_prev.prevp_receive()
 
         return m1 ^ m2
     
@@ -393,12 +420,12 @@ class Server2(Server):
         m2 = (a & b) ^ (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
 
         # Send m2 to Server1
-        self.__mess_prev.prevp_send(m2)
+        self.messenger_prev.prevp_send(m2)
 
         # Receive m1 from Server1
-        m1 = self.__mess_prev.prevp_receive()
+        m1 = self.messenger_prev.prevp_receive()
         while m1 == None:
-            m1 = self.__mess_prev.prevp_receive()
+            m1 = self.messenger_prev.prevp_receive()
 
         return [m1 ^ m2]
     
@@ -416,13 +443,25 @@ class Server2(Server):
 
     def online_share(self, sharingserver: int, lambda1: bitarray, lambda2: bitarray, message: bitarray) -> bitarray:
         if sharingserver == "0":
-            m = self.__mess_next.nextp_receive()
+            m = self.messenger_next.nextp_receive()
             while m == None:
-                m = self.__mess_next.nextp_receive()
+                m = self.messenger_next.nextp_receive()
         if sharingserver == "1":
-            m = self.__mess_prev.prevp_receive()
+            m = self.messenger_prev.prevp_receive()
             while m == None:
-                m = self.__mess_prev.prevp_receive()
+                m = self.messenger_prev.prevp_receive()
         if sharingserver == "2":
             m = lambda1 + lambda2 + message
         return m
+        
+    def printMessengers(self):
+        print("S2 to S0", end="")
+        self.messenger_next.printQueuesStatus()
+        print("S2 to S1", end="")
+        self.messenger_prev.printQueuesStatus()
+
+    def getnextmessenger(self) -> Messenger:
+        return self.messenger_next
+
+    def getprevmessenger(self) -> Messenger:
+        return self.messenger_prev

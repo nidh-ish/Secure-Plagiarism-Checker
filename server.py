@@ -58,6 +58,8 @@ class Server:
         pass
     def online_share(self):
         pass    
+    def online_reconstruction(self):
+        pass
     def OR(self):
         pass
     def printMessengers(self):
@@ -71,10 +73,10 @@ class Share:
     def __init__(self) -> None:
         self.__list = multiprocessing.Queue()
 
-    def add(self, m):
+    def add(self, m: bitarray):
         self.__list.put(m)
     
-    def get(self):
+    def get(self) -> list[bitarray]:
         a = self.__list.get()
         b = self.__list.get()
         self.__list.put(a)
@@ -165,6 +167,16 @@ class Server0(Server):
             m = lambda1 ^ lambda2 ^ message
             self.messenger_next.nextp_send(m)
             self.messenger_prev.prevp_send(m)
+
+    def online_reconstruction(self, lambda1: bitarray, lambda2: bitarray) -> bitarray:
+        self.messenger_next.nextp_send(lambda2)
+        self.messenger_prev.prevp_send(lambda1)
+
+        m = self.messenger_next.nextp_receive()
+        while m == None:
+            m = self.messenger_next.nextp_receive()
+
+        return lambda1 ^ lambda2 ^ m
 
     def printMessengers(self):
         print("S0 to S1", end="")
@@ -307,6 +319,15 @@ class Server1(Server):
                 m = self.messenger_next.nextp_receive()
         
         return m
+    
+    def online_reconstruction(self, lambda1: bitarray, m: bitarray) -> bitarray:
+        self.messenger_prev.prevp_send(m)
+
+        lambda2 = self.messenger_prev.prevp_receive()
+        while lambda2 == None:
+            lambda2 = self.messenger_prev.prevp_receive()
+
+        return lambda1 ^ lambda2 ^ m
 
     def printMessengers(self):
         print("S1 to S2", end="")
@@ -454,6 +475,13 @@ class Server2(Server):
             m = lambda1 + lambda2 + message
         return m
         
+    def online_reconstruction(self, lambda2: bitarray, m: bitarray) -> bitarray:
+        lambda1 = self.messenger_next.nextp_receive()
+        while lambda1 == None:
+            lambda1 = self.messenger_next.nextp_receive()
+
+        return lambda1 ^ lambda2 ^ m
+    
     def printMessengers(self):
         print("S2 to S0", end="")
         self.messenger_next.printQueuesStatus()

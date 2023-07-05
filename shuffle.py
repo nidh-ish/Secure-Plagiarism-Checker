@@ -38,7 +38,6 @@ class encryptedFingerprintOutput:
             temp.append(i)
         for i in temp:
             self.__list.put(i)
-        print(temp)
         return temp
 
 def getSharesfromFile(f) -> list[Share]:
@@ -92,8 +91,9 @@ class Shuffle:
             temp.append(ba2hex(i))
         print(temp)
     
-    def helper(self, Input: list[Share], S: Server, Serveri: int, Serverj: int, P: list[int], output: encryptedFingerprintOutput) -> None:
+    def helper(self, Input: list[Share], S: Server, Serveri: int, Serverj: int, P: list[int] | None) -> list[Share]:
         L = len(Input)
+        Output = []
         
         # Server 0's code
         if S.id() == 0:
@@ -131,7 +131,7 @@ class Shuffle:
 
         #Online begins
             if Serveri == 0 and Serverj == 1:
-                temp1 = self.permute(lambdaIn2.copy())
+                temp1 = self.permute(lambdaIn2.copy(), P.copy())
                 
                 mOutS2 = self.ArrayXOR([temp1, lambdaOut2, beta])
 
@@ -139,7 +139,7 @@ class Shuffle:
                 S2messenger.prevp_send(mOutS2)
 
             if Serveri == 0 and Serverj == 2:
-                temp1 = self.permute(lambdaIn1.copy())
+                temp1 = self.permute(lambdaIn1.copy(), P.copy())
                 
                 mOutS1 = self.ArrayXOR([temp1, lambdaOut1, beta])
 
@@ -150,8 +150,7 @@ class Shuffle:
                 share = Share()
                 share.add(lambdaOut1[i])
                 share.add(lambdaOut2[i])
-                output.addShare(share)
-            
+                Output.append(share)
 
         # Server 1's code
         if S.id() == 1:
@@ -179,8 +178,8 @@ class Shuffle:
 
         #Online begins
             if Serveri == 0 and Serverj == 1:
-                temp1 = self.permute(lambdaIn1.copy())
-                temp2 = self.permute(mIn.copy())
+                temp1 = self.permute(lambdaIn1.copy(), P.copy())
+                temp2 = self.permute(mIn.copy(), P.copy())
                 mOutS1 = self.ArrayXOR([temp1, lambdaOut1, temp2, alpha])
 
                 S2messenger = S.getnextmessenger()
@@ -207,8 +206,8 @@ class Shuffle:
                 mOut = self.ArrayXOR([mOutS1, mOutS2])
 
             if Serveri == 1 and Serverj == 2:
-                temp1 = self.permute(lambdaIn1.copy(), P)
-                temp2 = self.permute(mIn.copy(), P)
+                temp1 = self.permute(lambdaIn1.copy(), P.copy())
+                temp2 = self.permute(mIn.copy(), P.copy())
                 mOutS1 = self.ArrayXOR([temp1, lambdaOut1.copy(), temp2])
 
                 S2messenger = S.getnextmessenger()
@@ -223,8 +222,7 @@ class Shuffle:
                 share = Share()
                 share.add(lambdaOut1[i])
                 share.add(mOut[i])
-                output.addShare(share)
-            
+                Output.append(share)
 
         # Server 2's code
         if S.id() == 2:
@@ -267,8 +265,8 @@ class Shuffle:
                 mOut = self.ArrayXOR([mOutS1, mOutS2])
                 
             if Serveri == 0 and Serverj == 2:
-                temp1 = self.permute(lambdaIn2.copy())
-                temp2 = self.permute(mIn.copy())
+                temp1 = self.permute(lambdaIn2.copy(), P.copy())
+                temp2 = self.permute(mIn.copy(), P.copy())
                 mOutS2 = self.ArrayXOR([temp1, lambdaOut2, temp2, alpha])
 
                 S1messenger = S.getprevmessenger()
@@ -280,7 +278,7 @@ class Shuffle:
                 mOut = self.ArrayXOR([mOutS1, mOutS2])
                 
             if Serveri == 1 and Serverj == 2:
-                temp1 = self.permute(lambdaIn2.copy(), P)
+                temp1 = self.permute(lambdaIn2.copy(), P.copy())
                 mOutS2 = self.ArrayXOR([temp1, lambdaOut2.copy()])
 
                 S1messenger = S.getprevmessenger()
@@ -295,10 +293,77 @@ class Shuffle:
                 share = Share()
                 share.add(lambdaOut2[i])
                 share.add(mOut[i])
-                output.addShare(share)
-
-        # output.put(Output)
+                Output.append(share)
+        return Output
     
+    def shuffle(self, Input1: list[Share], Input2: list[Share], S: Server) -> list[list[Share]]:
+        L = len(Input1)
+        if S.id() == 0:
+        #Offline begins
+            sigma01 = self.getrandompermutation(L)
+            sigma02 = self.getrandompermutation(L)
+
+            S1messenger = S.getnextmessenger()
+            S2messenger = S.getprevmessenger()
+
+            S1messenger.nextp_send(sigma01)
+            S2messenger.prevp_send(sigma02)
+
+        #Online begins
+            temp11 = self.helper(Input1, S, 0, 1, sigma01)
+            temp12 = self.helper(Input2, S, 0, 1, sigma01)
+            temp21 = self.helper(temp11, S, 1, 2, None)
+            temp22 = self.helper(temp12, S, 1, 2, None)
+            Output1 = self.helper(temp21, S, 0, 2, sigma02)
+            Output2 = self.helper(temp22, S, 0, 2, sigma02)
+
+            return [Output1, Output2]
+
+        if S.id() == 1:
+        #Offline begins
+            sigma12 = self.getrandompermutation(L)
+            
+            S0messenger = S.getprevmessenger()
+            S2messenger = S.getnextmessenger()
+
+            S2messenger.nextp_send(sigma12)
+            sigma01 = S0messenger.prevp_receive()
+            while sigma01 == None:
+                sigma01 = S0messenger.prevp_receive()
+
+        #Online begins
+            temp11 = self.helper(Input1, S, 0, 1, sigma01)
+            temp12 = self.helper(Input2, S, 0, 1, sigma01)
+            temp21 = self.helper(temp11, S, 1, 2, sigma12)
+            temp22 = self.helper(temp12, S, 1, 2, sigma12)
+            Output1 = self.helper(temp21, S, 0, 2, None)
+            Output2 = self.helper(temp22, S, 0, 2, None)
+
+            return [Output1, Output2]
+
+        if S.id() == 2:
+        #Offline begins
+            S0messenger = S.getnextmessenger()
+            S1messenger = S.getprevmessenger()
+
+            sigma12 = S1messenger.prevp_receive()
+            while sigma12 == None:
+                sigma12 = S1messenger.prevp_receive()
+
+            sigma02 = S0messenger.nextp_receive()
+            while sigma02 == None:
+                sigma02 = S0messenger.nextp_receive()
+
+        #Online begins
+            temp11 = self.helper(Input1, S, 0, 1, None)
+            temp12 = self.helper(Input2, S, 0, 1, None)
+            temp21 = self.helper(temp11, S, 1, 2, sigma12)
+            temp22 = self.helper(temp12, S, 1, 2, sigma12)
+            Output1 = self.helper(temp21, S, 0, 2, sigma02)
+            Output2 = self.helper(temp22, S, 0, 2, sigma02)
+
+            return [Output1, Output2]
+
 if __name__ == "__main__":
     shuffle = Shuffle()
 
@@ -327,49 +392,55 @@ if __name__ == "__main__":
     S2 = Server2(r02, r12, r_common, M12, M02)
 
     
-    file0 = open("Client1_Server0.dat", "r")
+    file0 = open("Client0_Server0_v2.dat", "r")
     f0 = getSharesfromFile(file0)
     file0.close()
-    file1 = open("Client1_Server1.dat", "r")
+    file1 = open("Client0_Server1_v2.dat", "r")
     f1 = getSharesfromFile(file1)
     file1.close()
-    file2 = open("Client1_Server2.dat", "r")
+    file2 = open("Client0_Server2_v2.dat", "r")
     f2 = getSharesfromFile(file2)
     file2.close()
+    print0 = []
+    for i in range(len(f0)):
+        x = f1[i].get()
+        y = f2[i].get()
+        print0.append(ba2hex(x[0] ^ x[1] ^ y[0]))
+    # print(print0, "\n\n")
 
-    permutation = shuffle.getrandompermutation(10)
+    # permutation = shuffle.getrandompermutation(10)
     # out0 = ArrayOutput()
     # out1 = ArrayOutput()
     # out2 = ArrayOutput()
-    out0 = encryptedFingerprintOutput()
-    out1 = encryptedFingerprintOutput()
-    out2 = encryptedFingerprintOutput()
+    # out0 = encryptedFingerprintOutput()
+    # out1 = encryptedFingerprintOutput()
+    # out2 = encryptedFingerprintOutput()
+    # # print(permutation)
+    # p0 = multiprocessing.Process(target=shuffle.shuffle, args=(f0, S0, out0))
+    # p1 = multiprocessing.Process(target=shuffle.shuffle, args=(f1, S1, out1))
+    # p2 = multiprocessing.Process(target=shuffle.shuffle, args=(f2, S2, out2))
 
-    p0 = multiprocessing.Process(target=shuffle.helper, args=(f0, S0, 1, 2, permutation, out0))
-    p1 = multiprocessing.Process(target=shuffle.helper, args=(f1, S1, 1, 2, permutation, out1))
-    p2 = multiprocessing.Process(target=shuffle.helper, args=(f2, S2, 1, 2, permutation, out2))
-
-    p0.start()
-    p1.start()
-    p2.start()
-    p0.join()
-    p1.join()
-    p2.join()
-    output0 = out0.getShares()
-    output1 = out1.getShares()
-    output2 = out2.getShares()
-    print1 = []
-    print2 = []
-    for i in range(len(f0)):
-        x = output1[i].get()
-        y = output2[i].get()
-        print1.append(ba2hex(x[0] ^ x[1] ^ y[0]))
+    # p0.start()
+    # p1.start()
+    # p2.start()
+    # p0.join()
+    # p1.join()
+    # p2.join()
+    # output0 = out0.getShares()
+    # output1 = out1.getShares()
+    # output2 = out2.getShares()
+    # print1 = []
+    # print2 = []
+    # for i in range(len(f0)):
+    #     x = output1[i]
+    #     y = output2[i]
+    #     print1.append(ba2hex(x[0] ^ x[1] ^ y[0]))
 
     
-    for i in range(len(f0)):
-        x = output0[i].get()
-        y = output1[i].get()
-        print2.append(ba2hex(x[0] ^ x[1] ^ y[1]))
+    # for i in range(len(f0)):
+    #     x = output0[i]
+    #     y = output1[i]
+    #     print2.append(ba2hex(x[0] ^ x[1] ^ y[1]))
 
-    print(print1)
-    print(print2)
+    # print(print1)
+    # print(print2)

@@ -388,7 +388,6 @@ class AES:
         output.append(key)
         return output
         
-
     def circuit(self, k: list[bitarray], m: list[bitarray], S:Server, output: Share) -> bitarray:
         
         state = None

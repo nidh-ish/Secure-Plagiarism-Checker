@@ -62,6 +62,8 @@ f2.close()
 #     print(ba2int(l10) == ba2int(l11), ba2int(l20) == ba2int(l22), ba2int(m1) == ba2int(m2))
 #     print(ba2hex(l11 ^ l22 ^ m2))
 
+
+    
 import struct
 from bitarray import bitarray
 

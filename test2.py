@@ -9,7 +9,7 @@ class encryptedFingerprintOutput:
     def addShare(self, a: Share) -> None:
         self.__list.put(a)
 
-    def getShares(self) -> List[Share]:
+    def getShares(self) -> list[Share]:
         temp = []
         while self.__list.empty() != True:
             i = self.__list.get()
@@ -31,7 +31,7 @@ def getSharesfromFile(f) -> list[Share]:
         line = f.readline()
     return shares
 
-def runAESonList(f: List[Share], k: Share, S: Server, aes: AES, output: encryptedFingerprintOutput) -> None:
+def runAESonList(f: list[Share], k: Share, S: Server, aes: AES, output: encryptedFingerprintOutput) -> None:
     if S.id() == 0:
         kl1, kl2 = k.get()
         outputs = []
@@ -112,7 +112,7 @@ if __name__=='__main__':
     f1 = []
     f2 = []
     for i in range(2):
-        s0= Share()
+        s0 = Share()
         s1 = Share()
         s2 = Share()
         s0.add(l1)

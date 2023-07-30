@@ -1,5 +1,6 @@
 from server import *
 import math
+import struct
 
 class FPVShare:
     def __init__(self, significand: Share, exponent: Share, zero: Share, sign: Share,) -> None:
@@ -7,7 +8,7 @@ class FPVShare:
         self.exponent = exponent
         self.sign = sign
         self.zero = zero
-        self.l = 23
+        self.l = 24
     
     def setShare(self, significand: Share, exponent: Share, sign: Share, zero: Share):
         if significand != None:
@@ -54,7 +55,7 @@ bss0.add(bitarray("0"))
 
 avs1 = Share()
 avs1.add(bitarray("0"))
-avs1.add(bitarray("01000000000000000000000"))
+avs1.add(bitarray("101000000000000000000000"))
 aps1 = Share()
 aps1.add(bitarray("0"))
 aps1.add(bitarray("10000000"))
@@ -66,7 +67,7 @@ ass1.add(bitarray("0"))
 ass1.add(bitarray("0"))
 bvs1 = Share()
 bvs1.add(bitarray("0"))
-bvs1.add(bitarray("11000000000000000000000"))
+bvs1.add(bitarray("111000000000000000000000"))
 bps1 = Share()
 bps1.add(bitarray("0"))
 bps1.add(bitarray("10000000"))
@@ -79,7 +80,7 @@ bss1.add(bitarray("0"))
 
 avs2 = Share()
 avs2.add(bitarray("0"))
-avs2.add(bitarray("01000000000000000000000"))
+avs2.add(bitarray("101000000000000000000000"))
 aps2 = Share()
 aps2.add(bitarray("0"))
 aps2.add(bitarray("10000000"))
@@ -91,7 +92,7 @@ ass2.add(bitarray("0"))
 ass2.add(bitarray("0"))
 bvs2 = Share()
 bvs2.add(bitarray("0"))
-bvs2.add(bitarray("11000000000000000000000"))
+bvs2.add(bitarray("111000000000000000000000"))
 bps2 = Share()
 bps2.add(bitarray("0"))
 bps2.add(bitarray("10000000"))
@@ -118,6 +119,31 @@ class FPVArithmetic:
     def __init__(self):
         self.P = 61
 
+    def convertToInt(self, mantissa_str):
+        power_count = -1
+        mantissa_int = 0
+        for i in mantissa_str:
+            mantissa_int += (int(i) * pow(2, power_count))
+            power_count -= 1
+        return (mantissa_int + 1)
+    
+    def converttofloat(self, ieee_32: str):
+        signstr = ieee_32[0]
+        expstr = ieee_32[1:9]
+        manstr = ieee_32[9:]
+        ieee_32 = signstr + "|" + expstr + "|" + manstr
+        sign_bit = int(ieee_32[0])
+        exponent_bias = int(ieee_32[2 : 10], 2)
+        exponent_unbias = exponent_bias - 127
+        mantissa_str = ieee_32[11 : ]
+        mantissa_int = self.convertToInt(mantissa_str)
+        real_no = pow(-1, sign_bit) * mantissa_int * pow(2, exponent_unbias)
+        return real_no
+
+    def float_to_bin(self, num):
+        bits, = struct.unpack('!I', struct.pack('!f', num))
+        return "{:032b}".format(bits)
+
     # Offline XOR of bits A and B
     def XOR_offline(self, A: list[bitarray], B: list[bitarray], S: Server0 | Server1 | Server2):
         if S.id() == 0:
@@ -142,7 +168,6 @@ class FPVArithmetic:
     # Offline XOR of Field elements A and B
     def XOR_offlineF(self, A: list[bitarray], B: list[bitarray], S: Server0 | Server1 | Server2):
         if S.id() == 0:
-            # temp21 = S.offline_AND1(ba2int(A[0] ^ A[1]), ba2int(B[0] ^ B[1]))
             temp00 = S.addF(self.P, A[0], B[0])
             temp01 = S.addF(self.P, A[1], B[1])
             temp1, temp10, temp11 = S.offline_ANDF(self.P, S.addF(self.P, A[0], A[1]), S.addF(self.P, B[0], B[1]))
@@ -669,6 +694,85 @@ class FPVArithmetic:
                 carry_on = self.XOR_onlineF(temp_on, temp2_on, S)
             return carry_off, carry_on
 
+    def EQZ(self, A: list[bitarray], l: int, S: Server0 | Server1 | Server2):
+        if S.id() == 0:
+            Randbits = []
+            r10 = bitarray("0")
+            r11 = bitarray("0")
+            for i in range(l):
+                invi = l - 1 - i
+                temp = self.GenerateRandomSharesFD(S)
+                Randbits.append([temp[2], temp[3]])
+                r10 = S.addF(self.P, r10, S.multiplyF(self.P, int2ba(2**invi), temp[2]))
+                r11 = S.addF(self.P, r11, S.multiplyF(self.P, int2ba(2**invi), temp[3]))
+            r20 = bitarray("0")
+            r21 = bitarray("0")
+            for i in range(5):
+                invi = 5 - 1 - i
+                temp = self.GenerateRandomSharesFD(S)
+                r20 = S.addF(self.P, r20, S.multiplyF(self.P, int2ba(2**invi), temp[2]))
+                r21 = S.addF(self.P, r21, S.multiplyF(self.P, int2ba(2**invi), temp[3]))
+            ctemp00 = S.addF(self.P, S.multiplyF(self.P, int2ba(2**l), r20), r10)
+            ctemp01 = S.addF(self.P, S.multiplyF(self.P, int2ba(2**l), r21), r11)
+            ctemp10 = S.addF(self.P, A[0], ctemp00)
+            ctemp11 = S.addF(self.P, A[1], ctemp01)
+            c = S.online_reconstructionF(self.P, ctemp10, ctemp11)
+            c = c[self.P-l:self.P]
+            dlist = []
+            dor0 = None
+            dor1 = None
+            for i in range(l):
+                dtemp0 = S.subtractF(self.P, S.multiplyF(self.P, int2ba(2), S.multiplyF(self.P, c[i:i+1], Randbits[i][0])), Randbits[i][0])
+                dtemp1 = S.subtractF(self.P, S.multiplyF(self.P, int2ba(2), S.multiplyF(self.P, c[i:i+1], Randbits[i][1])), Randbits[i][1])
+                dlist.append([dtemp0, dtemp1])
+                if dor0 == None:
+                    dor0 = dtemp0
+                    dor1 = dtemp1
+                else:
+                    dortemp = self.OR_offlineF([dor0, dor1], [dtemp0, dtemp1], S)
+                    dor0 = dortemp[0]
+                    dor1 = dortemp[1]
+            return S.find_additive_inverse(self.P, dor0), S.find_additive_inverse(self.P, dor1)   
+
+        else: 
+            Randbits = []
+            r1_off = bitarray("0")
+            r1_on = bitarray("0")
+            for i in range(l):
+                invi = l - 1 - i
+                temp = self.GenerateRandomSharesFD(S)
+                Randbits.append([temp[2], temp[3]])
+                r1_off = S.addF(self.P, r1_off, S.multiplyF(self.P, int2ba(2**invi), temp[2]))
+                r1_on = S.addF(self.P, r1_on, S.multiplyF(self.P, int2ba(2**invi), temp[3]))
+            r2_off = bitarray("0")
+            r2_on = bitarray("0")
+            for i in range(5):
+                invi = 5 - 1 - i
+                temp = self.GenerateRandomSharesFD(S)
+                r2_off = S.addF(self.P, r2_off, S.multiplyF(self.P, int2ba(2**invi), temp[2]))
+                r2_on = S.addF(self.P, r2_on, S.multiplyF(self.P, int2ba(2**invi), temp[3]))
+            ctemp0_off = S.addF(self.P, S.multiplyF(self.P, int2ba(2**l), r2_off), r1_off)
+            ctemp0_on = S.addF(self.P, S.multiplyF(self.P, int2ba(2**l), r2_on), r1_on)
+            ctemp1_off = S.addF(self.P, A[0], ctemp0_off)
+            ctemp1_on = S.addF(self.P, A[1], ctemp0_on)
+            c = S.online_reconstructionF(self.P, ctemp1_off, ctemp1_on)
+            c = c[self.P-l:self.P]
+            dlist = []
+            dor_off = None
+            dor_on = None
+            for i in range(l):
+                dtemp_off = S.subtractF(self.P, S.multiplyF(self.P, int2ba(2), S.multiplyF(self.P, c[i:i+1], Randbits[i][0])), Randbits[i][0])
+                dtemp_on = S.subtractF(self.P, S.multiplyF(self.P, int2ba(2), S.multiplyF(self.P, c[i:i+1], Randbits[i][1])), Randbits[i][1])
+                dtemp_on = S.addF(self.P, dtemp_on, c[i:i+1])
+                dlist.append([dtemp_off, dtemp_on])
+                if dor_off == None:
+                    dor_off = dtemp_off
+                    dor_on = dtemp_on
+                else:
+                    dor_off = self.OR_offlineF([dor_off], [dtemp_off], S)
+                    dor_on = self.OR_onlineF(dor_on, dtemp_on, S)
+            return S.find_additive_inverse(self.P, dor_off), S.subtractF(self.P, dor_on, int2ba(1))
+
     def BitLT(self, A: bitarray, B: list[list[bitarray]], S: Server0 | Server1 | Server2):
         if S.id() == 0:
             k = len(A)
@@ -677,10 +781,18 @@ class FPVArithmetic:
                 temp1 = S.find_additive_inverse(self.P, B[i][0])
                 temp2 = S.find_additive_inverse(self.P, B[i][1])
                 bprime.append([temp1, temp2])
+            b0 =  bitarray("0")
+            b1 = bitarray("0")
+            for i in range(k):
+                invi = k - 1 - i
+                b0 = S.addF(self.P, b0, S.multiplyF(self.P, B[i][0], int2ba(2**invi)))
+                b1 = S.addF(self.P, b1, S.multiplyF(self.P, B[i][1], int2ba(2**invi)))
+            eq = self.EQZ([b0, b1], k, S)
             carrybit = self.CarryOutbitConstShare(A, bprime, S)
             outbitl1 = S.find_additive_inverse(self.P, carrybit[0])
             outbitl2 = S.find_additive_inverse(self.P, carrybit[1])
-            return outbitl1, outbitl2
+            outbit = self.XOR_offlineF([outbitl1, outbitl2], [eq[0], eq[1]], S)
+            return outbit[0], outbit[1]
         
         else: 
             k = len(A)
@@ -689,10 +801,20 @@ class FPVArithmetic:
                 temp1 = S.find_additive_inverse(self.P, B[i][0])
                 temp2 = S.subtractF(self.P, B[i][1], int2ba(1))
                 bprime.append([temp1, temp2])
+            b_off =  bitarray("0")
+            b_on = bitarray("0")
+            for i in range(k):
+                invi = k - 1 - i
+                b_off = S.addF(self.P, b_off, S.multiplyF(self.P, B[i][0], int2ba(2**invi)))
+                b_on = S.addF(self.P, b_on, S.multiplyF(self.P, B[i][1], int2ba(2**invi)))
+            b_on = S.subtractF(self.P, A, b_on)
+            eq = self.EQZ([b_off, b_on], k, S)
             carrybit = self.CarryOutbitConstShare(A, bprime, S)
             outbitl = S.find_additive_inverse(self.P, carrybit[0])
             outbitm = S.subtractF(self.P, carrybit[1], int2ba(1))
-            return outbitl, outbitm
+            outbit_off = self.XOR_offlineF([outbitl], [eq[0]], S)
+            outbit_on = self.XOR_onlineF(outbitm, eq[1], S)
+            return outbit_off, outbit_on
 
     def Mod2m(self, A: list[bitarray], k: int, m: int, S: Server0 | Server1 | Server2):
         if S.id() == 0:
@@ -705,8 +827,6 @@ class FPVArithmetic:
                 Randbits.append([temp[2], temp[3]])
                 r10 = S.addF(self.P, r10, S.multiplyF(self.P, int2ba(2**invi), temp[2]))
                 r11 = S.addF(self.P, r11, S.multiplyF(self.P, int2ba(2**invi), temp[3]))
-            p = S.online_reconstructionF(self.P, r10, r11)
-            print("r1", p)
             r20 = bitarray("0")
             r21 = bitarray("0")
             for i in range(5 + k - m):
@@ -719,12 +839,8 @@ class FPVArithmetic:
             ctemp10 = S.addF(self.P, A[0], ctemp00)
             ctemp11 = S.addF(self.P, A[1], ctemp01)
             c = S.online_reconstructionF(self.P, ctemp10, ctemp11)
-            print("c ", c) 
             cp = int2ba(ba2int(c) % 2**m, length=m)
-            print("cp", cp)
             u0, u1 = self.BitLT(cp, Randbits, S)
-            p = S.online_reconstructionF(self.P, u0, u1)
-            print("u ", p)
             atemp0 = S.subtractF(self.P, r10, S.multiplyF(self.P, int2ba(2**m), u0))
             atemp1 = S.subtractF(self.P, r11, S.multiplyF(self.P, int2ba(2**m), u1))
             a0 = atemp0
@@ -741,14 +857,13 @@ class FPVArithmetic:
                 Randbits.append([temp[2], temp[3]])
                 r1_off = S.addF(self.P, r1_off, S.multiplyF(self.P, int2ba(2**invi), temp[2]))
                 r1_on = S.addF(self.P, r1_on, S.multiplyF(self.P, int2ba(2**invi), temp[3]))   
-            S.online_reconstructionF(self.P, r1_off, r1_on)         
             r2_off = bitarray("0")
             r2_on = bitarray("0")
             for i in range(5 + k - m):
                 invi = 5 + k - m - 1 - i
                 temp = self.GenerateRandomSharesFD(S)
                 r2_off = S.addF(self.P, r2_off, S.multiplyF(self.P, int2ba(2**invi), temp[2]))
-                r2_on = S.addF(self.P, r2_on, S.multiplyF(self.P, int2ba(2**invi), temp[3]))                
+                r2_on = S.addF(self.P, r2_on, S.multiplyF(self.P, int2ba(2**invi), temp[3]))
             ctemp0_off = S.addF(self.P, S.multiplyF(self.P, int2ba(2**m), r2_off), r1_off)
             ctemp0_on = S.addF(self.P, S.multiplyF(self.P, int2ba(2**m), r2_on), r1_on)
             ctemp1_off = S.addF(self.P, A[0], ctemp0_off)
@@ -756,7 +871,6 @@ class FPVArithmetic:
             c = S.online_reconstructionF(self.P, ctemp1_off, ctemp1_on)
             cp = int2ba(ba2int(c) % 2**m, length=m)
             u_off, u_on = self.BitLT(cp, Randbits, S)
-            p = S.online_reconstructionF(self.P, u_off, u_on)
             atemp_off = S.subtractF(self.P, r1_off, S.multiplyF(self.P, int2ba(2**m), u_off))
             atemp_on = S.subtractF(self.P, r1_on, S.multiplyF(self.P, int2ba(2**m), u_on))
             a_off = atemp_off
@@ -766,8 +880,6 @@ class FPVArithmetic:
     def SimpleTrunc(self, A: list[bitarray], k: int, m: int, S: Server0 | Server1 | Server2):
         if S.id() == 0:
             ap = self.Mod2m(A, k, m, S)
-            p = S.online_reconstructionF(self.P, ap[0], ap[1])
-            print("2m", p)
             dtemp0 = S.subtractF(self.P, ap[0], A[0])
             dtemp1 = S.subtractF(self.P, ap[1], A[1])
             q = S.find_multiplicative_inverse(self.P, int2ba(2**m))
@@ -776,14 +888,13 @@ class FPVArithmetic:
             return d0, d1
         else:
             ap = self.Mod2m(A, k, m, S)
-            S.online_reconstructionF(self.P, ap[0], ap[1])
             dtemp_off = S.subtractF(self.P, ap[0], A[0])
             dtemp_on = S.subtractF(self.P, ap[1], A[1])
             q = S.find_multiplicative_inverse(self.P, int2ba(2**m))
             d_off = S.multiplyF(self.P, dtemp_off, q)
             d_on = S.multiplyF(self.P, dtemp_on, q)
             return d_off, d_on
-        
+
     def CarryOutbitShareShare(self, A: list[list[bitarray]], B: list[list[bitarray]], S: Server0 | Server1 | Server2) -> tuple[bitarray, bitarray]:
         if S.id() == 0:    
             k = len(A)
@@ -939,15 +1050,7 @@ class FPVArithmetic:
             b_on = S.subtractF(self.P, d[1], btemp1_on)
             return b_off, b_on
 
-    # def FVPAdd_offline(self, A: FPVShare, B: FPVShare, S: Server0 | Server1 | Server2):
-    #     pass
-    # def FVPAdd_online(self, A: FPVShare, B: FPVShare, S: Server0 | Server1 | Server2):
-    #     pass
-    # def FVPSubtract_offline(self, A: FPVShare, B: FPVShare, S: Server0 | Server1 | Server2):
-    #     pass
-    # def FVPSubtract_online(self, A: FPVShare, B: FPVShare, S: Server0 | Server1 | Server2):
-    #     pass
-    def FVPMultiply(self, A: FPVShare, B: FPVShare, S: Server0 | Server1 | Server2):
+    def FPVMultiply(self, A: FPVShare, B: FPVShare, S: Server0 | Server1 | Server2):
         sharesa = A.getShare()
         sharesb = B.getShare()
         v1 = sharesa[0].get()
@@ -961,15 +1064,13 @@ class FPVArithmetic:
         l = A.getl()
         if S.id() == 0:
             v = S.offline_ANDF(self.P, S.addF(self.P, v1[0], v1[1]), S.addF(self.P, v2[0], v2[1]))
-            p = S.online_reconstructionF(self.P, v[1], v[2])
-            print("v1*v2", (p))
             v = self.SimpleTrunc([v[1], v[2]], 2*l, l - 1, S)
             b = self.LT(v, [bitarray('0'), bitarray('0')], l + 1, S)
             temptrunc0 = S.offline_ANDF(self.P, S.addF(self.P, v[0], v[1]), S.addF(self.P, b[0], b[1]))
-            temptrunc1 = [S.multiplyF(self.P, temptrunc0[0], int2ba(2)), S.multiplyF(self.P, temptrunc0[1], int2ba(2))]
+            temptrunc1 = [S.multiplyF(self.P, temptrunc0[1], int2ba(2)), S.multiplyF(self.P, temptrunc0[2], int2ba(2))]
             temptrunc2 = [S.find_additive_inverse(self.P, b[0]), S.find_additive_inverse(self.P, b[1])]
             temptrunc3 = S.offline_ANDF(self.P, S.addF(self.P, temptrunc2[0], temptrunc2[1]), S.addF(self.P, v[0], v[1]))
-            temptrunc = [S.addF(self.P, temptrunc1[0], temptrunc3[0]), S.addF(self.P, temptrunc1[1], temptrunc3[1])]
+            temptrunc = [S.addF(self.P, temptrunc1[0], temptrunc3[1]), S.addF(self.P, temptrunc1[1], temptrunc3[2])]
             v = self.SimpleTrunc([temptrunc[0], temptrunc[1]], l + 1, 1, S)
             z = self.OR_offlineF(z1, z2, S)
             s = self.XOR_offlineF(s1, s2, S)
@@ -994,9 +1095,7 @@ class FPVArithmetic:
         else:
             v_off = S.offline_ANDF(self.P, v1[0], v2[0])
             v_on = S.online_ANDF(self.P, v1[1], v2[1])
-            p = S.online_reconstructionF(self.P, v_off, v_on)
             v = self.SimpleTrunc([v_off, v_on], 2*l, l - 1, S)
-            # S.online_reconstructionF(self.P, v[0], v[1])
             b = self.LT(v, [bitarray('0'), int2ba(2**l)], l + 1, S)
             temptrunc0_off = S.offline_ANDF(self.P, v[0], b[0])
             temptrunc0_on = S.online_ANDF(self.P, v[1], b[1])
@@ -1011,7 +1110,7 @@ class FPVArithmetic:
             s_off = self.XOR_offlineF([s1[0]], [s2[0]], S)
             s_on = self.XOR_onlineF(s1[1], s2[1], S)
             ptemp_off = S.subtractF(self.P, b[0], S.addF(self.P, p1[0], p2[0]))
-            ptemp_on = S.addF(self.P, S.subtractF(self.P, b[1], S.addF(self.P, p1[1], p2[1])), int2ba(l))
+            ptemp_on = S.subtractF(self.P, int2ba(126), S.subtractF(self.P, b[1], S.addF(self.P, p1[1], p2[1])))
             ztemp = [S.find_additive_inverse(self.P, z_off), S.subtractF(self.P, z_on, int2ba(1))]
             p_off = S.offline_ANDF(self.P, ptemp_off, ztemp[0])
             p_on = S.online_ANDF(self.P, ptemp_on, ztemp[1])
@@ -1030,128 +1129,210 @@ class FPVArithmetic:
             output = FPVShare(vshare, pshare, zshare, sshare)
             return output
 
-
-    # def FVPDivide_offline(self, A: FPVShare, B: FPVShare, S: Server0 | Server1 | Server2):
-    #     pass
-    # def FVPDivide_online(self, A: FPVShare, B: FPVShare, S: Server0 | Server1 | Server2):
-    #     pass
-    def Reconstruct_offline(self, A: bitarray, S: Server0 | Server1 | Server2):
-        pass
-    def Reconstruct_online(self, A: bitarray, S: Server0 | Server1 | Server2):
-        pass
-
-def TestFunctions(A: list[bitarray], B: list[bitarray], C :list[bitarray], S: Server0 | Server1 | Server2):
-    fpv = FPVArithmetic()
-    if S.id() == 0:
-        Inlist = [A, B, C]
-        alist = bitarray("100")
-        
-        # m = S.online_shareF(7, 0, l1, l2, x)
-
-        # p = S.online_reconstructionF(61, outoff[0], outoff[1])
-        # print(p)
-        outoff = fpv.FVPMultiply(a0, b0, S)
-        sharesa = outoff.getShare()
+    def FPVonline_reconstruction2Float(self, A: FPVShare, S: Server0 | Server1 | Server2):
+        sharesa = A.getShare()
         v1 = sharesa[0].get()
         p1 = sharesa[1].get()
         z1 = sharesa[2].get()
         s1 = sharesa[3].get()
         
-        v = S.online_reconstructionF(61, v1[0], v1[1])
-        p = S.online_reconstructionF(61, p1[0], p1[1])[53:61]
-        z = S.online_reconstructionF(61, z1[0], z1[1])
-        s = S.online_reconstructionF(61, s1[0], s1[1])
-
-
-        # print(v)
-        # print(p)
-        # print(z)
-        # print(s)
-
-
-        # for i in range(len(outoff)):
-        #     print(S.online_reconstructionF(61, outoff[i][0], outoff[i][1]))
-        # print("0", l1, l2)
-        # print(S.online_reconstructionF(7, l1, l2))
-        # for i in range(len(outoff)):
-        #     nout = outoff[i]
-        #     put = S.online_reconstruction(nout[0], nout[1])
-        #     print(put)
-
-    elif S.id() == 1:
-        Inlist = [A, B, C]
-        alist = bitarray("100")
-        # Inoff = [[A[0]], [B[0]], [C[0]]]
-        # Inon = [[A[1]], [B[1]], [C[1]]]
-        # Inoff = [[A[0]], [B[0]]]
-        # Inon = [[A[1]], [B[1]]]
-        # print("1", l1, m)
-        # print(S.online_reconstructionF(7, l1, m))
-        outoff = fpv.FVPMultiply(a1, b1, S)
-        sharesa = outoff.getShare()
-        v1 = sharesa[0].get()
-        p1 = sharesa[1].get()
-        z1 = sharesa[2].get()
-        s1 = sharesa[3].get()
-
-
-
         v = S.online_reconstructionF(61, v1[0], v1[1])
         p = S.online_reconstructionF(61, p1[0], p1[1])
         z = S.online_reconstructionF(61, z1[0], z1[1])
         s = S.online_reconstructionF(61, s1[0], s1[1])
+        # p = S.addF(self.P, int2ba(127), p)
 
-        v = ba2base(2, v)
-        v = ba2base(2, p)
-        z = ba2base(2, z)
-        s = ba2base(2, s[60:61])
+        v = ba2base(2, v[self.P - 23 : self.P])
+        p = ba2base(2, p[self.P - 8 : self.P])
+        s = ba2base(2, s[self.P - 1 : self.P])
 
-        # for i in range(len(outoff)):
-        #     S.online_reconstructionF(61, outoff[i][0], outon[i][0])
-        # S.online_reconstructionF(61, outoff, outon)
-        # S.online_reconstructionF(61, outoff[0], outoff[1])
-        # for i in range(len(outoff)):
-        #     S.online_reconstructionF(61, outoff[i][0], outoff[i][1])
-        # outon = fpv.BitDec(A[1], 7, 4, S)
-        # for i in range(len(outoff)):
-        #     put = S.online_reconstruction(outoff[i][0], outoff[i][1])
-        # print(outoff, outon)
+        z = ba2int(z)
+        if z == 1:
+            return 0.0
+        
+        f = self.converttofloat(s + p + v)
+        return f
+
+    def FPVoffline_shareFloat(self, sharingserver: int, S: Server0 | Server1 | Server2):
+        if S.id() == 0:
+            vl1, vl2 = S.offline_shareF(self.P, sharingserver)
+            pl1, pl2 = S.offline_shareF(self.P, sharingserver)
+            zl1, zl2 = S.offline_shareF(self.P, sharingserver)
+            sl1, sl2 = S.offline_shareF(self.P, sharingserver)
+            return [vl1, vl2, pl1, pl2, zl1, zl2, sl1, sl2]
+        
+        elif S.id() == 1:
+            if sharingserver == 1:
+                vl1, vl2 = S.offline_shareF(self.P, sharingserver)
+                pl1, pl2 = S.offline_shareF(self.P, sharingserver)
+                zl1, zl2 = S.offline_shareF(self.P, sharingserver)
+                sl1, sl2 = S.offline_shareF(self.P, sharingserver)
+                return [vl1, vl2, pl1, pl2, zl1, zl2, sl1, sl2]
+            else:
+                vl1 = S.offline_shareF(self.P, sharingserver)
+                pl1 = S.offline_shareF(self.P, sharingserver)
+                zl1 = S.offline_shareF(self.P, sharingserver)
+                sl1 = S.offline_shareF(self.P, sharingserver)
+                return [vl1, pl1, zl1, sl1]
+        else:
+            if sharingserver == 2:
+                vl1, vl2 = S.offline_shareF(self.P, sharingserver)
+                pl1, pl2 = S.offline_shareF(self.P, sharingserver)
+                zl1, zl2 = S.offline_shareF(self.P, sharingserver)
+                sl1, sl2 = S.offline_shareF(self.P, sharingserver)
+                return [vl1, vl2, pl1, pl2, zl1, zl2, sl1, sl2]
+            else:
+                vl2 = S.offline_shareF(self.P, sharingserver)
+                pl2 = S.offline_shareF(self.P, sharingserver)
+                zl2 = S.offline_shareF(self.P, sharingserver)
+                sl2 = S.offline_shareF(self.P, sharingserver)
+                return [vl2, pl2, zl2, sl2]
+    
+    def FPVonline_shareFloat(self, sharingserver: int, offlineData: list[bitarray], message: float | None, S: Server0 | Server1 | Server2):
+        vshare = Share()
+        pshare = Share()
+        zshare = Share()
+        sshare = Share()
+        if S.id() == 0:
+            if S.id() == sharingserver:
+                if message == 0.0:
+                    zmessage = bitarray("1")
+                else:
+                    zmessage = bitarray("0")
+                m = self.float_to_bin(message)
+                smessage = bitarray(m[0:1])
+                pmessage = bitarray(m[1:9])
+                vmessage = bitarray("1" + m[9:])
+                S.online_shareF(self.P, sharingserver, offlineData[0], offlineData[1], vmessage)
+                S.online_shareF(self.P, sharingserver, offlineData[2], offlineData[3], pmessage)
+                S.online_shareF(self.P, sharingserver, offlineData[4], offlineData[5], zmessage)
+                S.online_shareF(self.P, sharingserver, offlineData[6], offlineData[7], smessage)
+            vshare.add(offlineData[0])
+            vshare.add(offlineData[1])
+            pshare.add(offlineData[2])
+            pshare.add(offlineData[3])
+            zshare.add(offlineData[4])
+            zshare.add(offlineData[5])
+            sshare.add(offlineData[6])
+            sshare.add(offlineData[7])
+        elif S.id() == 1:
+            vm, pm, zm, sm = None, None, None, None
+            if sharingserver == 1:
+                if message == 0.0:
+                    zmessage = bitarray("1")
+                else:
+                    zmessage = bitarray("0")
+                m = self.float_to_bin(message)
+                smessage = bitarray(m[0:1])
+                pmessage = bitarray(m[1:9])
+                vmessage = bitarray("1" + m[9:])
+                vm = S.online_shareF(self.P, sharingserver, offlineData[0], offlineData[1], vmessage)
+                pm = S.online_shareF(self.P, sharingserver, offlineData[2], offlineData[3], pmessage)
+                zm = S.online_shareF(self.P, sharingserver, offlineData[4], offlineData[5], zmessage)
+                sm = S.online_shareF(self.P, sharingserver, offlineData[6], offlineData[7], smessage)
+                vshare.add(offlineData[0])
+                vshare.add(vm)
+                pshare.add(offlineData[2])
+                pshare.add(pm)
+                zshare.add(offlineData[4])
+                zshare.add(zm)
+                sshare.add(offlineData[6])
+                sshare.add(sm)
+            else:
+                vm = S.online_shareF(self.P, sharingserver, None, None, None)
+                pm = S.online_shareF(self.P, sharingserver, None, None, None)
+                zm = S.online_shareF(self.P, sharingserver, None, None, None)
+                sm = S.online_shareF(self.P, sharingserver, None, None, None)
+                vshare.add(offlineData[0])
+                vshare.add(vm)
+                pshare.add(offlineData[1])
+                pshare.add(pm)
+                zshare.add(offlineData[2])
+                zshare.add(zm)
+                sshare.add(offlineData[3])
+                sshare.add(sm)
+        else:
+            vm, pm, zm, sm = None, None, None, None
+            if sharingserver == 2:
+                if message == 0.0:
+                    zmessage = bitarray("1")
+                else:
+                    zmessage = bitarray("0")
+                m = self.float_to_bin(message)
+                smessage = bitarray(m[0:1])
+                pmessage = bitarray(m[1:9])
+                vmessage = bitarray("1" + m[9:])
+                vm = S.online_shareF(self.P, sharingserver, offlineData[0], offlineData[1], vmessage)
+                pm = S.online_shareF(self.P, sharingserver, offlineData[2], offlineData[3], pmessage)
+                zm = S.online_shareF(self.P, sharingserver, offlineData[4], offlineData[5], zmessage)
+                sm = S.online_shareF(self.P, sharingserver, offlineData[6], offlineData[7], smessage)
+                vshare.add(offlineData[1])
+                vshare.add(vm)
+                pshare.add(offlineData[3])
+                pshare.add(pm)
+                zshare.add(offlineData[5])
+                zshare.add(zm)
+                sshare.add(offlineData[7])
+                sshare.add(sm)
+            else:
+                vm = S.online_shareF(self.P, sharingserver, None, None, None)
+                pm = S.online_shareF(self.P, sharingserver, None, None, None)
+                zm = S.online_shareF(self.P, sharingserver, None, None, None)
+                sm = S.online_shareF(self.P, sharingserver, None, None, None)
+                vshare.add(offlineData[0])
+                vshare.add(vm)
+                pshare.add(offlineData[1])
+                pshare.add(pm)
+                zshare.add(offlineData[2])
+                zshare.add(zm)
+                sshare.add(offlineData[3])
+                sshare.add(sm)
+        Output = FPVShare(vshare, pshare, zshare, sshare)
+        return Output
+
+def TestFunctions(A: list[bitarray], B: list[bitarray], C :list[bitarray], S: Server0 | Server1 | Server2):
+    fpv = FPVArithmetic()
+    if S.id() == 0:
+        x = 0.57
+        offlinedata = fpv.FPVoffline_shareFloat(0, S)
+        sharex = fpv.FPVonline_shareFloat(0, offlinedata, x, S)
+        offlinedata = fpv.FPVoffline_shareFloat(1, S)
+        sharey = fpv.FPVonline_shareFloat(1, offlinedata, None, S)
+        offlinedata = fpv.FPVoffline_shareFloat(2, S)
+        sharez = fpv.FPVonline_shareFloat(2, offlinedata, None, S)
+        outoff = fpv.FPVMultiply(sharex, sharey, S)
+        v = fpv.FPVonline_reconstruction2Float(outoff, S)
+        print(v)
+        output = fpv.FPVMultiply(outoff, sharez, S)
+        v = fpv.FPVonline_reconstruction2Float(output, S)
+        print(v)
+        
+    elif S.id() == 1:
+        offlinedata = fpv.FPVoffline_shareFloat(0, S)
+        sharex = fpv.FPVonline_shareFloat(0, offlinedata, None, S)
+        y = 0.047
+        offlinedata = fpv.FPVoffline_shareFloat(1, S)
+        sharey = fpv.FPVonline_shareFloat(1, offlinedata, y, S)
+        offlinedata = fpv.FPVoffline_shareFloat(2, S)
+        sharez = fpv.FPVonline_shareFloat(2, offlinedata, None, S)
+        outoff = fpv.FPVMultiply(sharex, sharey, S)
+        v = fpv.FPVonline_reconstruction2Float(outoff, S)
+        output = fpv.FPVMultiply(outoff, sharez, S)
+        v = fpv.FPVonline_reconstruction2Float(output, S)
 
     else:
-        Inlist = [A, B, C]
-        alist = bitarray("100")
-        # Inoff = [[A[0]], [B[0]], [C[0]]]
-        # Inon = [[A[1]], [B[1]], [C[1]]]
-        # Inoff = [[A[0]], [B[0]]]
-        # Inon = [[A[1]], [B[1]]]
-        # print(S.online_reconstructionF(7, l2, m))
-        outoff = fpv.FVPMultiply(a2, b2, S)
-        sharesa = outoff.getShare()
-        v1 = sharesa[0].get()
-        p1 = sharesa[1].get()
-        z1 = sharesa[2].get()
-        s1 = sharesa[3].get()
+        offlinedata = fpv.FPVoffline_shareFloat(0, S) 
+        sharex = fpv.FPVonline_shareFloat(0, offlinedata, None, S)
+        offlinedata = fpv.FPVoffline_shareFloat(1, S)
+        sharey = fpv.FPVonline_shareFloat(1, offlinedata, None, S)
+        z = 0.945
+        offlinedata = fpv.FPVoffline_shareFloat(2, S)
+        sharez = fpv.FPVonline_shareFloat(2, offlinedata, z, S)
+        outoff = fpv.FPVMultiply(sharex, sharey, S)
+        v = fpv.FPVonline_reconstruction2Float(outoff, S)
+        output = fpv.FPVMultiply(outoff, sharez, S)
+        v = fpv.FPVonline_reconstruction2Float(output, S)
 
-
-
-        S.online_reconstructionF(61, v1[0], v1[1])
-        S.online_reconstructionF(61, p1[0], p1[1])
-        S.online_reconstructionF(61, z1[0], z1[1])
-        S.online_reconstructionF(61, s1[0], s1[1])
-        # outoff = fpv.OR_offlineF(A, B, S)
-        # outon = fpv.OR_onlineF(A[1], B[1], S)
-        # outoff = fpv.PreOR_offline(Inoff, S)
-        # outon = fpv.PreOR_online(Inon, S)
-        # for i in range(len(outoff)):
-        #     S.online_reconstructionF(61, outoff[i][0], outon[i][0])
-        # S.online_reconstructionF(61, outoff, outon)
-        # S.online_reconstructionF(61, outoff[0], outoff[1])
-        # for i in range(len(outoff)):
-        #     S.online_reconstructionF(61, outoff[i][0], outoff[i][1])
-        # outon = fpv.BitDec(A[1], 7, 4, S)
-        # for i in range(len(outoff)):
-        #     put = S.online_reconstruction(outoff[i][0], outoff[i][1])
-        # print(outoff, outon)    
 
 if __name__ == "__main__":
     
@@ -1181,21 +1362,21 @@ if __name__ == "__main__":
 
     l1 = bitarray(bin(random.getrandbits(61))[2:].zfill(61))
     l2 = bitarray(bin(random.getrandbits(61))[2:].zfill(61))
-    inp = bitarray("1011010101")
+    inp = bitarray("001")
     m = int2ba((ba2int(inp) + ba2int(l1) + ba2int(l2))%(2**61-1), length=61)
     # inp = bitarray("0")
     # m = inp ^ l1 ^ l2   
 
     k1 = bitarray(bin(random.getrandbits(61))[2:].zfill(61))
     k2 = bitarray(bin(random.getrandbits(61))[2:].zfill(61))
-    sk = bitarray("100")
+    sk = bitarray("000")
     mk = int2ba((ba2int(sk) + ba2int(k1) + ba2int(k2))%(2**61-1), length=61)
     # sk = bitarray("0")
     # mk = sk ^ k1 ^ k2   
     
     x1 = bitarray(bin(random.getrandbits(61))[2:].zfill(61))
     x2 = bitarray(bin(random.getrandbits(61))[2:].zfill(61))
-    x = bitarray("1")
+    x = bitarray("0")
     mx = int2ba((ba2int(x) + ba2int(x1) + ba2int(x2))%(2**61-1), length=61)
     # mx = x ^ x1 ^ x2   
     # 2.5 = 0 10000000 01000000000000000000000

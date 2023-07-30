@@ -307,17 +307,17 @@ if __name__=='__main__':
     p1.join()
     p2.join()
 
-    # out0 = o0.getShares()
-    # out1 = o1.getShares()
-    # out2 = o2.getShares()
+    out0 = o0.getShares()
+    out1 = o1.getShares()
+    out2 = o2.getShares()
 
     # print(out0)
 
-    # for i in range(len(out0)):
-    #     share0 = out0[i]
-    #     share1 = out1[i]
-    #     share2 = out2[i]
-    #     print(ba2hex(share1[0] ^ share2[0] ^ share1[1]))
+    for i in range(len(out0)):
+        share0 = out0[i]
+        share1 = out1[i]
+        share2 = out2[i]
+        print(ba2hex(share1[0] ^ share2[0] ^ share1[1]))
     # o0 = s0.get()
     # o1 = s1.get()
     # o2 = s2.get()

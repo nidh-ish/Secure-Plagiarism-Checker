@@ -705,9 +705,6 @@ class Server1(Server):
             while m == None:
                 m = self.messenger_next.nextp_receive()
             return m
-        
-    
-
 
 class Server2(Server):
     def __init__(self, initRandom20, initRandom21, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
@@ -844,7 +841,7 @@ class Server2(Server):
             m1 = self.messenger_prev.prevp_receive()
 
         return self.addF(P, m1, m2)
-    
+
     def online_reconstructionF(self, P: int, lambda2: bitarray, m: bitarray) -> bitarray:
         lambda1 = self.messenger_next.nextp_receive()
         while lambda1 == None:

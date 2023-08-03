@@ -28,17 +28,27 @@ def findCommonIndices(A: list[bitarray], B: list[bitarray]) -> list[tuple[int, i
                 output.append((i, j))
     return output
 
-def getSharesfromFile(f) -> list[Share]:
-    line = f.readline()
-    shares = []
-    while line:
+def getSharesfromFile(file) -> tuple[list[Share], list[Share]]:
+    line = file.readline()
+    L = int(line)
+    f = []
+    for _ in range(L):
+    # while line:
+        line = file.readline()
         s = Share()
         x = line.split(" ")
         s.add(bitarray(x[0]))
         s.add(bitarray(x[1]))
-        shares.append(s)
-        line = f.readline()
-    return shares
+        f.append(s)
+    v = []
+    for _ in range(L):
+        line = file.readline()
+        s = Share()
+        x = line.split(" ")
+        s.add(bitarray(x[0]))
+        s.add(bitarray(x[1]))
+        v.append(s)
+    return f, v
 
 def runAESonList(f: list[Share], k: Share, S: Server, aes: AES) -> list[Share]:
     outputs = []
@@ -81,34 +91,68 @@ def reconstructList(f: list[Share], S: Server):
         output.append(y)
     return output
 
-def generatezerovalues(L) -> tuple[list[bitarray], list[bitarray], list[bitarray]]:
+def reconstructListF(f: list[Share], S: Server):
+    output = []
+    for i in f:
+        x = i.get()
+        y = S.online_reconstructionF(61, x[0], x[1])
+        output.append(y)
+    return output
+
+def generatezerovaluesF(P, L) -> tuple[list[bitarray], list[bitarray], list[bitarray]]:
     share1 = []
     for i in range(L):
         share = Share()
-        x = bitarray("0"*128)
-        y = bitarray("0"*128)
+        x = bitarray("0"*P)
+        y = bitarray("0"*P)
         share.add(x)
         share.add(y)
         share1.append(share)
     share2 = []
     for i in range(L):
         share = Share()
-        x = bitarray("0"*128)
-        y = bitarray("0"*128)
+        x = bitarray("0"*P)
+        y = bitarray("0"*P)
         share.add(x)
         share.add(y)
         share2.append(share)
     share3 = []
     for i in range(L):
         share = Share()
-        x = bitarray("0"*128)
-        y = bitarray("0"*128)
+        x = bitarray("0"*P)
+        y = bitarray("0"*P)
         share.add(x)
         share.add(y)
         share3.append(share)
     return share1, share2, share3
 
-def SecureCS(fingerprint1: list[Share], fingerprint2: list[Share], values1: list[Share], values2: list[Share], Linv1: Share, Linv2: Share, S: Server) -> float:
+def getNumerator(P: int, v1: list[Share], v2: list[Share], commonindices: list[tuple[int, int]], S: Server0 | Server1 | Server2):
+    s0 = bitarray("0")
+    s1 = bitarray("0")
+    if S.id() == 0:
+        for i in range(len(commonindices)):
+            v1i = v1[commonindices[i][0]].get()
+            v2i = v2[commonindices[i][1]].get()
+            vi = S.offline_ANDF(P, S.addF(P, v1i[0], v1i[1]), S.addF(P, v2i[0], v2i[1]))
+            s0 = S.addF(P, s0, vi[1])
+            s1 = S.addF(P, s1, vi[2])
+        p = S.online_reconstructionF(P, s0, s1)
+        print(ba2int(p))
+    else:
+        for i in range(len(commonindices)):
+            v1i = v1[commonindices[i][0]].get()
+            v2i = v2[commonindices[i][1]].get()
+            vi = S.offline_ANDF(P, v1i[0], v2i[0])
+            s0 = S.addF(P, s0, vi)
+        
+        for i in range(len(commonindices)):
+            v1i = v1[commonindices[i][0]].get()
+            v2i = v2[commonindices[i][1]].get()
+            vi = S.online_ANDF(P, v1i[1], v2i[1])
+            s1 = S.addF(P, s1, vi)
+        p = S.online_reconstructionF(P, s0, s1)
+
+def SecureCS(fingerprint1: list[Share], fingerprint2: list[Share], values1: list[Share], values2: list[Share], Linv1: Share, Linv2: Share, S: Server0 | Server1 | Server2) -> float:
     aes = AES()
     shuffle = Shuffle()
     if S.id() == 0:
@@ -131,18 +175,23 @@ def SecureCS(fingerprint1: list[Share], fingerprint2: list[Share], values1: list
         encF1 = runAESonList(fingerprint1, key, S, aes)
         encF2 = runAESonList(fingerprint2, key, S, aes)
 
-        temp1 = shuffle.shuffle(encF1, values1, S)
-        temp2 = shuffle.shuffle(encF2, values2, S)
+        # Shuffling Values and Encrypted Fingerprints
+        temp1 = shuffle.shuffle(61, encF1, values1, S)
+        temp2 = shuffle.shuffle(61, encF2, values2, S)
         encshufF1 = temp1[0]
         shufV1 = temp1[1]
         encshufF2 = temp2[0]
         shufV2 = temp2[1]
+
+        # Reconstructing the Shuffled and Encrypted Fingerprints
         Z1 = reconstructList(encshufF1, S)
         Z2 = reconstructList(encshufF2, S)
+
+        # Finding the indices of the common fingerprints
         commonindices = findCommonIndices(Z1, Z2)
-        for x in commonindices:
-            i, j = x[0], x[1]
-            print(ba2hex(Z1[i]), ba2hex(Z2[j]))
+        
+        # Getting the numerator of CS using the common fingerprints
+        Num = getNumerator(61, shufV1, shufV2, commonindices, S)
 
 
     if S.id() == 1:
@@ -168,16 +217,23 @@ def SecureCS(fingerprint1: list[Share], fingerprint2: list[Share], values1: list
         encF1 = runAESonList(fingerprint1, key, S, aes)
         encF2 = runAESonList(fingerprint2, key, S, aes)
 
-        temp1 = shuffle.shuffle(encF1, values1, S)
-        temp2 = shuffle.shuffle(encF2, values2, S)
+        # Shuffling Values and Encrypted Fingerprints
+        temp1 = shuffle.shuffle(61, encF1, values1, S)
+        temp2 = shuffle.shuffle(61, encF2, values2, S)
         encshufF1 = temp1[0]
         shufV1 = temp1[1]
         encshufF2 = temp2[0]
         shufV2 = temp2[1]
+        
+        # Reconstructing the Shuffled and Encrypted Fingerprints
         Z1 = reconstructList(encshufF1, S)
         Z2 = reconstructList(encshufF2, S)
+        
+        # Finding the indices of the common fingerprints
         commonindices = findCommonIndices(Z1, Z2)
-
+        
+        # Getting the numerator of CS using the common fingerprints
+        Num = getNumerator(61, shufV1, shufV2, commonindices, S)
 
     if S.id() == 2:
         # Generating and sharing keys for AES
@@ -201,15 +257,23 @@ def SecureCS(fingerprint1: list[Share], fingerprint2: list[Share], values1: list
         encF1 = runAESonList(fingerprint1, key, S, aes)
         encF2 = runAESonList(fingerprint2, key, S, aes)
 
-        temp1 = shuffle.shuffle(encF1, values1, S)
-        temp2 = shuffle.shuffle(encF2, values2, S)
+        # Shuffling Values and Encrypted Fingerprints
+        temp1 = shuffle.shuffle(61, encF1, values1, S)
+        temp2 = shuffle.shuffle(61, encF2, values2, S)
         encshufF1 = temp1[0]
         shufV1 = temp1[1]
         encshufF2 = temp2[0]
         shufV2 = temp2[1]
+        
+        # Reconstructing the Shuffled and Encrypted Fingerprints
         Z1 = reconstructList(encshufF1, S)
         Z2 = reconstructList(encshufF2, S)
+        
+        # Finding the indices of the common fingerprints
         commonindices = findCommonIndices(Z1, Z2)
+
+        # Getting the numerator of CS using the common fingerprints
+        Num = getNumerator(61, shufV1, shufV2, commonindices, S)
 
     return 0.0
 
@@ -256,29 +320,29 @@ if __name__=='__main__':
     # keyshare2.add(mk)
 
     # Get fingerprint Shares for Client 1
-    file0 = open("Client1_Server0.dat", "r")
-    f01 = getSharesfromFile(file0)
+    file0 = open("Client1_Server0_v2.dat", "r")
+    f01, v01 = getSharesfromFile(file0)
     file0.close()
-    file1 = open("Client1_Server1.dat", "r")
-    f11 = getSharesfromFile(file1)
+    file1 = open("Client1_Server1_v2.dat", "r")
+    f11, v11 = getSharesfromFile(file1)
     file1.close()
-    file2 = open("Client1_Server2.dat", "r")
-    f21 = getSharesfromFile(file2)
+    file2 = open("Client1_Server2_v2.dat", "r")
+    f21, v21 = getSharesfromFile(file2)
     file2.close()
 
     # Get fingerprint Shares for Client 1
     file0 = open("Client2_Server0_v2.dat", "r")
-    f02 = getSharesfromFile(file0)
+    f02, v02 = getSharesfromFile(file0)
     file0.close()
     file1 = open("Client2_Server1_v2.dat", "r")
-    f12 = getSharesfromFile(file1)
+    f12, v12 = getSharesfromFile(file1)
     file1.close()
     file2 = open("Client2_Server2_v2.dat", "r")
-    f22 = getSharesfromFile(file2)
+    f22, v22 = getSharesfromFile(file2)
     file2.close()
 
-    v01, v11, v21 = generatezerovalues(10)
-    v02, v12, v22 = generatezerovalues(10)
+    # v01, v11, v21 = generatezerovaluesF(61, 3)
+    # v02, v12, v22 = generatezerovaluesF(61, 3)
 
     o0 = encryptedFingerprintOutput()
     o1 = encryptedFingerprintOutput()

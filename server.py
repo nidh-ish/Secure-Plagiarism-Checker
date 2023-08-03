@@ -491,6 +491,9 @@ class Server1(Server):
         temp3 = self.__L[2].pop(0)
         temp4 = self.__L[3].pop(0)
 
+        if type(temp1) != bitarray:
+            print(temp1)
+
         m1temp1 = self.subtractF(P, self.multiplyF(P, a, temp1), bitarray("0"*P))
         m1temp2 = self.subtractF(P, self.multiplyF(P, b, temp2), m1temp1)
         m1temp3 = self.addF(P, m1temp2, temp3)
@@ -827,6 +830,9 @@ class Server2(Server):
         temp3 = self.__L[2].pop(0)
         temp4 = self.__L[3].pop(0)
 
+        if type(temp1) != bitarray:
+            print(temp1)
+            
         m2temp1 = self.subtractF(P, self.multiplyF(P, a, temp1), self.multiplyF(P, a, b))
         m2temp2 = self.subtractF(P, self.multiplyF(P, b, temp2), m2temp1)
         m2temp3 = self.addF(P, m2temp2, temp3)

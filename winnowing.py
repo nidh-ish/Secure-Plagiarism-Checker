@@ -8,6 +8,10 @@ from nltk import cluster
 from collections import Counter
 from statistics import mean
 import networkx as nx
+import random
+from bitarray import bitarray
+from bitarray.util import *
+from fpv import *
 import sys
 import csv
 
@@ -19,6 +23,51 @@ import csv
 #     vector2 = [counter2[k] for k in all_items]
 #     return vector1, vector2
 
+def Write2File(f0, f1, f2, inp1, v1):
+    L = len(inp1)
+    f0.write(f"{L}\n")
+    f1.write(f"{L}\n")
+    f2.write(f"{L}\n")
+    for i in range(L):
+        l1 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        l2 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        m = l1 ^ l2 ^ inp1[i] 
+        f0.write(f"{ba2base(2, l1)} {ba2base(2, l2)}\n")
+        f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
+        f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
+
+    for i in range(L):
+        l1 = int2ba(random.randint(0, 2**61 - 2), length=61)
+        l2 = int2ba(random.randint(0, 2**61 - 2), length=61)
+        m = int2ba((ba2int(l1) + ba2int(l2) + v1[i])%(2**61-1), length=61) 
+        f0.write(f"{ba2base(2, l1)} {ba2base(2, l2)}\n")
+        f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
+        f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
+    s = 0
+    for i in v1:
+        s += i**2
+    s = math.sqrt(s)
+    s = 1/s
+    fpv = FPVArithmetic()
+    zmessage = None
+    if s == 0.0:
+        zmessage = bitarray("1")
+    else:
+        zmessage = bitarray("0")
+    m = fpv.float_to_bin(s)
+    smessage = bitarray(m[0:1])
+    pmessage = bitarray(m[1:9])
+    vmessage = bitarray("1" + m[9:])
+    s = [vmessage, pmessage, zmessage, smessage]
+    for i in s:
+        l1 = int2ba(random.randint(0, 2**61 - 2), length=61)
+        l2 = int2ba(random.randint(0, 2**61 - 2), length=61)
+        m = int2ba((ba2int(l1) + ba2int(l2) + ba2int(i))%(2**61-1), length=61) 
+        f0.write(f"{ba2base(2, l1)} {ba2base(2, l2)}\n")
+        f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
+        f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
+
+
 def cosine_similarity(l1, l2):
 
     vec1 = Counter(l1)
@@ -27,8 +76,36 @@ def cosine_similarity(l1, l2):
     # print(len(vec1))
     # print(len(vec2))  
     
-    # print("Vec 1 : ", vec1)
-    # print("Vec 2: ", vec2)
+    v1key = []
+    v1val = []
+    for k in vec1.keys():
+        v1key.append(k)
+        v1val.append(vec1[k])
+    print(v1key)
+    print(v1val)
+    
+    v2key = []
+    v2val = []
+    for k in vec2.keys():
+        v2key.append(k)
+        v2val.append(vec2[k])
+    print(v2key)
+    print(v2val)
+
+    # s = 0
+    # for i in v1key:
+    #     if i in v2key:
+    #         i1 = v1key.index(i)
+    #         i2 = v2key.index(i)
+    #         s += v1val[i1]*v2val[i2]
+    # print("numcal", s)
+    # d1 = [i**2 for i in v1val]
+    # d2 = [i**2 for i in v2val]
+    # print("sumcal", sum(d1), sum(d2))
+    # d1 = math.sqrt(sum(d1))
+    # d2 = math.sqrt(sum(d2))
+    # print("denominatorcal", d1*d2)
+    # print(s/(d1*d2))
 
     intersection = set(vec1.keys()) & set(vec2.keys())
     
@@ -40,10 +117,13 @@ def cosine_similarity(l1, l2):
     #         print(vec2[x].key())
     
     numerator = sum([vec1[x] * vec2[x] for x in intersection])
+    print("numac", numerator)
 
     sum1 = sum([vec1[x]**2 for x in vec1.keys()])
     sum2 = sum([vec2[x]**2 for x in vec2.keys()])
+    print("sumac", sum1, sum2)
     denominator = math.sqrt(sum1) * math.sqrt(sum2)
+    print("denomac", denominator)
 
     if not denominator:
         return 0.0
@@ -175,21 +255,59 @@ lev0s = []
 lev1s = []
 lev2s = []
 
-for i in range(10):
+for i in range(1):
     fingerprints1_0 = generate_fingerprints((program1+"_lev0.txt"), 13, 17)
     fingerprints2_0 = generate_fingerprints((program2+"_lev0.txt"), 13, 17)
     cosine_similarity_lev0 = cosine_similarity(fingerprints1_0, fingerprints2_0)
     lev0s.append(cosine_similarity_lev0)
+    lev1s.append(cosine_similarity_lev0)
+    lev2s.append(cosine_similarity_lev0)
+    
+    vec1 = Counter(fingerprints1_0)
+    vec2 = Counter(fingerprints2_0)
+    
+    # print(len(vec1))
+    # print(len(vec2))  
+    
+    v1key = []
+    v1val = []
+    for k in vec1.keys():
+        v1key.append(int2ba(2**126 + k, length=128))
+        v1val.append(vec1[k])
+    # print(v1key)
+    # print(v1val)
+    
+    v2key = []
+    v2val = []
+    for k in vec2.keys():
+        v2key.append(int2ba(2**126 + k, length=128))
+        v2val.append(vec2[k])
+    # print(v2key)
+    # print(v2val)
+    f0 = open("Client1_Server0_v2.dat", "w+")
+    f1 = open("Client1_Server1_v2.dat", "w+")
+    f2 = open("Client1_Server2_v2.dat", "w+")
+    Write2File(f0, f1, f2, v1key, v1val)
+    f0.close()
+    f1.close()
+    f2.close()
+    f0 = open("Client2_Server0_v2.dat", "w+")
+    f1 = open("Client2_Server1_v2.dat", "w+")
+    f2 = open("Client2_Server2_v2.dat", "w+")
+    Write2File(f0, f1, f2, v2key, v2val)
+    f0.close()
+    f1.close()
+    f2.close()
+    
+    # fingerprints1_1 = generate_fingerprints((program1+"_lev1.txt"), 13, 17)
+    # fingerprints2_1 = generate_fingerprints((program2+"_lev1.txt"), 13, 17)
+    # cosine_similarity_lev1 = cosine_similarity(fingerprints1_1, fingerprints2_1)
+    # lev1s.append(cosine_similarity_lev1)
 
-    fingerprints1_1 = generate_fingerprints((program1+"_lev1.txt"), 13, 17)
-    fingerprints2_1 = generate_fingerprints((program2+"_lev1.txt"), 13, 17)
-    cosine_similarity_lev1 = cosine_similarity(fingerprints1_1, fingerprints2_1)
-    lev1s.append(cosine_similarity_lev1)
-
-    fingerprints1_2 = generate_fingerprints((program1+"_lev2.txt"), 13, 17)
-    fingerprints2_2 = generate_fingerprints((program2+"_lev2.txt"), 13, 17)
-    cosine_similarity_lev2 = cosine_similarity(fingerprints1_2, fingerprints2_2)
-    lev2s.append(cosine_similarity_lev2)
+    # fingerprints1_2 = generate_fingerprints((program1+"_lev2.txt"), 13, 17)
+    # fingerprints2_2 = generate_fingerprints((program2+"_lev2.txt"), 13, 17)
+    # cosine_similarity_lev2 = cosine_similarity(fingerprints1_2, fingerprints2_2)
+    # lev2s.append(cosine_similarity_lev2)
 # print(len(fingerprints1_0))
 # print(len(fingerprints2_0))
 
@@ -202,6 +320,7 @@ for i in range(10):
 final_cosine_similarity_lev0 = round(mean(lev0s), 2)
 final_cosine_similarity_lev1 = round(mean(lev1s), 2)
 final_cosine_similarity_lev2 = round(mean(lev2s), 2)
+print(lev0s[0])
 # f10,f20 = buildVector(fingerprints1_0, fingerprints2_0)
 # f11,f21 = buildVector(fingerprints1_1, fingerprints2_1)
 # f12,f22 = buildVector(fingerprints1_2, fingerprints2_2)

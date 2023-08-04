@@ -167,29 +167,28 @@ if __name__=='__main__':
     p1 = multiprocessing.Process(target=runAESonList, args=(f1, keyshare1, S1, aes, o1))
     p2 = multiprocessing.Process(target=runAESonList, args=(f2, keyshare2, S2, aes, o2))
 
-    p0.start()
-    p1.start()
-    p2.start()
+    # p0.start()
+    # p1.start()
+    # p2.start()
 
-    p0.join()
-    p1.join()
-    p2.join()
+    # p0.join()
+    # p1.join()
+    # p2.join()
 
-    out0 = o0.getShares()
-    out1 = o1.getShares()
-    out2 = o2.getShares()
+    # out0 = o0.getShares()
+    # out1 = o1.getShares()
+    # out2 = o2.getShares()
 
-    # print(out0)
+    # # print(out0)
 
-    for i in range(len(out0)):
-        share0 = out0[i]
-        share1 = out1[i]
-        share2 = out2[i]
-        print(ba2hex(share1[0] ^ share2[0] ^ share1[1]))
+    # for i in range(len(out0)):
+    #     share0 = out0[i]
+    #     share1 = out1[i]
+    #     share2 = out2[i]
+    #     print(ba2hex(share1[0] ^ share2[0] ^ share1[1]))
     # o0 = s0.get()
     # o1 = s1.get()
     # o2 = s2.get()
-
 
     # print("AES input: ", ba2hex(inp))
     # print("AES key: ", ba2hex(sk))

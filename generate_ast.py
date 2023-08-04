@@ -105,54 +105,56 @@ def get_parent_children_relation(root, level=0):
                 children2.append(c)
             get_parent_children_relation(value, level=level+1)
 
-filename = sys.argv[2]
-input_tree = mutate(filename)
-count_l = count_loops(input_tree)
-count_if = count_if(input_tree) # type: ignore
-count_f = count_functions(input_tree)
-find_levels(input_tree)
-program_number1 = sys.argv[1]
+if __name__ == "__main__":
 
-filename_prognum = "program"+program_number1
-get_parent_children_relation(input_tree)
+    filename = sys.argv[2]
+    input_tree = mutate(filename)
+    count_l = count_loops(input_tree)
+    count_if = count_if(input_tree) # type: ignore
+    count_f = count_functions(input_tree)
+    find_levels(input_tree)
+    program_number1 = sys.argv[1]
 
-
-pc_1 = list(zip(parents1, children1))
-pc_2 = list(zip(parents2, children2))
-pc_1.sort
-pc_2.sort
-
-program_name = open(("program"+program_number1+".txt"), "w")
-program_name.write(filename)
-output_file_counts = open((filename_prognum+"_count.txt"), "w")
-output_file_counts.write('%d' % count_l)
-output_file_counts.write('\n')
-output_file_counts.write('%d' % count_if)
-output_file_counts.write('\n')
-output_file_counts.write('%d' % count_f)
-output_file_counts.write('\n')
+    filename_prognum = "program"+program_number1
+    get_parent_children_relation(input_tree)
 
 
-output_file_lev0 = open((filename_prognum+"_lev0.txt"), "w")
-for ele in level0:
-    output_file_lev0.write(ele)
-    output_file_lev0.write('\n')
+    pc_1 = list(zip(parents1, children1))
+    pc_2 = list(zip(parents2, children2))
+    pc_1.sort
+    pc_2.sort
 
-output_file_lev1 = open((filename_prognum+"_lev1.txt"), "w")
-output_file_lev2 = open((filename_prognum+"_lev2.txt"), "w")
-for ele in pc_1:
-    output_file_lev1.write(ele[0])
-    output_file_lev1.write('\n')
-    for item in ele[1]:
-        output_file_lev2.write(item)
-        output_file_lev2.write('\n')
+    program_name = open(("program"+program_number1+".txt"), "w")
+    program_name.write(filename)
+    output_file_counts = open((filename_prognum+"_count.txt"), "w")
+    output_file_counts.write('%d' % count_l)
+    output_file_counts.write('\n')
+    output_file_counts.write('%d' % count_if)
+    output_file_counts.write('\n')
+    output_file_counts.write('%d' % count_f)
+    output_file_counts.write('\n')
 
-# print("-----------------------------LEVEL1 -> LEVEL2-----------------------------------------------------")
-# for i in range(len(parents1)):
-#     print("Parent = ", parents1[i], "\nChildren = ", children1[i])
-#     print("\n")
-# print("------------------------------LEVEL2 -> LEVEL3----------------------------------------------------")
-# for i in range(len(parents2)):
-#     print("Parent = ", parents2[i], "\nChildren = ", children2[i])
-#     print("\n")
-# print("-------------------------------------------------------------------------------------------")
+
+    output_file_lev0 = open((filename_prognum+"_lev0.txt"), "w")
+    for ele in level0:
+        output_file_lev0.write(ele)
+        output_file_lev0.write('\n')
+
+    output_file_lev1 = open((filename_prognum+"_lev1.txt"), "w")
+    output_file_lev2 = open((filename_prognum+"_lev2.txt"), "w")
+    for ele in pc_1:
+        output_file_lev1.write(ele[0])
+        output_file_lev1.write('\n')
+        for item in ele[1]:
+            output_file_lev2.write(item)
+            output_file_lev2.write('\n')
+
+    # print("-----------------------------LEVEL1 -> LEVEL2-----------------------------------------------------")
+    # for i in range(len(parents1)):
+    #     print("Parent = ", parents1[i], "\nChildren = ", children1[i])
+    #     print("\n")
+    # print("------------------------------LEVEL2 -> LEVEL3----------------------------------------------------")
+    # for i in range(len(parents2)):
+    #     print("Parent = ", parents2[i], "\nChildren = ", children2[i])
+    #     print("\n")
+    # print("-------------------------------------------------------------------------------------------")

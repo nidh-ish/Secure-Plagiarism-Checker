@@ -1,5 +1,51 @@
 from server import *
 from aes import *
+from fpv import *
+import math
+
+def Write2File(f0, f1, f2, inp1, v1):
+    f0.write(f"3\n")
+    f1.write(f"3\n")
+    f2.write(f"3\n")
+    for i in range(3):
+        l1 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        l2 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        m = l1 ^ l2 ^ inp1[i] 
+        f0.write(f"{ba2base(2, l1)} {ba2base(2, l2)}\n")
+        f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
+        f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
+
+    for i in range(3):
+        l1 = int2ba(random.randint(0, 2**61 - 2), length=61)
+        l2 = int2ba(random.randint(0, 2**61 - 2), length=61)
+        m = int2ba((ba2int(l1) + ba2int(l2) + v1[i])%(2**61-1), length=61) 
+        f0.write(f"{ba2base(2, l1)} {ba2base(2, l2)}\n")
+        f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
+        f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
+    s = 0
+    for i in v1:
+        s += i**2
+    s = math.sqrt(s)
+    s = 1/s
+    fpv = FPVArithmetic()
+    zmessage = None
+    if s == 0.0:
+        zmessage = bitarray("1")
+    else:
+        zmessage = bitarray("0")
+    m = fpv.float_to_bin(s)
+    smessage = bitarray(m[0:1])
+    pmessage = bitarray(m[1:9])
+    vmessage = bitarray("1" + m[9:])
+    s = [vmessage, pmessage, zmessage, smessage]
+    for i in s:
+        l1 = int2ba(random.randint(0, 2**61 - 2), length=61)
+        l2 = int2ba(random.randint(0, 2**61 - 2), length=61)
+        m = int2ba((ba2int(l1) + ba2int(l2) + ba2int(i))%(2**61-1), length=61) 
+        f0.write(f"{ba2base(2, l1)} {ba2base(2, l2)}\n")
+        f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
+        f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
+
 
 
 
@@ -24,24 +70,48 @@ inp1 = [bitarray("01010100011101110110111100100000010011110110111001100101001000
 inp2 = [bitarray("11001111101111011111001011100100010111000100001000111001111011111110100110010111101100110111001100101101000110100110001000110100"), bitarray("10100111010110011100100101111000001000110110101100000110111011011100010000101001101100010011100100101111110100101110100100011100"), bitarray("01010100011101110110111100100000010011110110111001100101001000000100111001101001011011100110010100100000010101000111011101101111")]
 v1 = [1, 2, 3]
 v2 = [2, 4, 5]
-f0.write(f"3\n")
-f1.write(f"3\n")
-f2.write(f"3\n")
-for i in range(3):
-    l1 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
-    l2 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
-    m = l1 ^ l2 ^ inp1[i] 
-    f0.write(f"{ba2base(2, l1)} {ba2base(2, l2)}\n")
-    f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
-    f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
 
-for i in range(3):
-    l1 = int2ba(random.randint(0, 2**61 - 2), length=61)
-    l2 = int2ba(random.randint(0, 2**61 - 2), length=61)
-    m = int2ba((ba2int(l1) + ba2int(l2) + v1[i])%(2**61-1), length=61) 
-    f0.write(f"{ba2base(2, l1)} {ba2base(2, l2)}\n")
-    f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
-    f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
+Write2File(f0, f1, f2, inp1, v1)
+# for i in range(3):
+#     l1 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+#     l2 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+#     m = l1 ^ l2 ^ inp1[i] 
+#     f0.write(f"{ba2base(2, l1)} {ba2base(2, l2)}\n")
+#     f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
+#     f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
+
+# for i in range(3):
+#     l1 = int2ba(random.randint(0, 2**61 - 2), length=61)
+#     l2 = int2ba(random.randint(0, 2**61 - 2), length=61)
+#     m = int2ba((ba2int(l1) + ba2int(l2) + v1[i])%(2**61-1), length=61) 
+#     f0.write(f"{ba2base(2, l1)} {ba2base(2, l2)}\n")
+#     f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
+#     f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
+# s = 0
+# for i in v1:
+#     s += i**2
+# s = math.sqrt(s)
+# s = 1/s
+# fpv = FPVArithmetic()
+# zmessage = None
+# if s == 0.0:
+#     zmessage = bitarray("1")
+# else:
+#     zmessage = bitarray("0")
+# m = fpv.float_to_bin(s)
+# smessage = bitarray(m[0:1])
+# pmessage = bitarray(m[1:9])
+# vmessage = bitarray("1" + m[9:])
+# s = [vmessage, pmessage, zmessage, smessage]
+# for i in s:
+#     l1 = int2ba(random.randint(0, 2**61 - 2), length=61)
+#     l2 = int2ba(random.randint(0, 2**61 - 2), length=61)
+#     m = int2ba((ba2int(l1) + ba2int(l2) + ba2int(i))%(2**61-1), length=61) 
+#     f0.write(f"{ba2base(2, l1)} {ba2base(2, l2)}\n")
+#     f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
+#     f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
+
+
 f0.close()
 f1.close()
 f2.close()

@@ -2,6 +2,7 @@ from server import *
 from aes import *
 from shuffle import *
 from fpv import *
+from winnowing import *
 
 class encryptedFingerprintOutput:
     def __init__(self) -> None:
@@ -214,7 +215,7 @@ class SecureCosineSimilarity:
             tempcs = fpv.FPVMultiply(floatnum, Linv1, S)
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
-            print(csout)
+            return csout
 
         if S.id() == 1:
             # Generating and sharing key for AES
@@ -260,6 +261,7 @@ class SecureCosineSimilarity:
             tempcs = fpv.FPVMultiply(floatnum, Linv1, S)
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
+            return csout
 
         if S.id() == 2:
             # Generating and sharing keys for AES
@@ -305,8 +307,34 @@ class SecureCosineSimilarity:
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
 
-        return 0.0
+            return csout
 
+    def Preprocess(self, program1, filename1, program2, filename2):
+        gast = GenAST()
+        gast.generate_ast(filename1, program1)
+        gast2 = GenAST()
+        gast2.generate_ast(filename2, program2)
+        win = Winnowing()
+        win.GentoFile(os.path.join("Program1", "program1"), os.path.join("Program2", "program2"))
+    
+    def Run(self, S: Server0 | Server1 | Server2):
+        c1string = os.path.join("Client1", "Client1_Server") + str(S.id()) + "_v2.dat"
+        c2string = os.path.join("Client2", "Client2_Server") + str(S.id()) + "_v2.dat"
+        file0 = open(c1string, "r")
+        f1, v1, IL1 = self.getSharesfromFile(file0)
+        file0.close()
+        file0 = open(c2string, "r")
+        f2, v2, IL2 = self.getSharesfromFile(file0)
+        file0.close()
+
+        print("Sharing done")
+
+        out = self.SecureCS(f1, f2, v1, v2, IL1, IL2, S)
+        if S.id() == 0:
+            with open("Output.dat", "w") as file:
+                print(out)
+                file.write(str(out))
+        return
 
 if __name__=='__main__':
     
@@ -334,59 +362,18 @@ if __name__=='__main__':
     S1 = Server1(r01, r12, r_common, M01, M12)
     S2 = Server2(r02, r12, r_common, M12, M02)
 
-    # Get key Shares
-    # k1 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
-    # k2 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
-    # sk = bitarray("01010100011010000110000101110100011100110010000001101101011110010010000001001011011101010110111001100111001000000100011001110101")
-    # mk = k1 ^ k2 ^ sk
-    # keyshare0 = Share()
-    # keyshare1 = Share()
-    # keyshare2 = Share()
-    # keyshare0.add(k1)
-    # keyshare0.add(k2)
-    # keyshare1.add(k1)
-    # keyshare1.add(mk)
-    # keyshare2.add(k2)
-    # keyshare2.add(mk)
-
     scs = SecureCosineSimilarity()
 
-    # Get fingerprint Shares for Client 1
-    file0 = open("Client1_Server0_v2.dat", "r")
-    f01, v01, IL01 = scs.getSharesfromFile(file0)
-    file0.close()
-    file1 = open("Client1_Server1_v2.dat", "r")
-    f11, v11, IL11 = scs.getSharesfromFile(file1)
-    file1.close()
-    file2 = open("Client1_Server2_v2.dat", "r")
-    f21, v21, IL21 = scs.getSharesfromFile(file2)
-    file2.close()
+    filename1 = sys.argv[2]
+    program_number1 = sys.argv[1]
+    filename2 = sys.argv[4]
+    program_number2 = sys.argv[3]
 
-    # Get fingerprint Shares for Client 1
-    file0 = open("Client2_Server0_v2.dat", "r")
-    f02, v02, IL02 = scs.getSharesfromFile(file0)
-    file0.close()
-    file1 = open("Client2_Server1_v2.dat", "r")
-    f12, v12, IL12 = scs.getSharesfromFile(file1)
-    file1.close()
-    file2 = open("Client2_Server2_v2.dat", "r")
-    f22, v22, IL22 = scs.getSharesfromFile(file2)
-    file2.close()
-
-    offline_circuit = []
-
-    aes = AES()
-
-    manager = multiprocessing.Manager()
-    d = manager.dict()
-
-    s0 = Share()
-    s1 = Share()
-    s2 = Share()
-
-    p0 = multiprocessing.Process(target=scs.SecureCS, args=(f01, f02, v01, v02, IL01, IL02, S0))
-    p1 = multiprocessing.Process(target=scs.SecureCS, args=(f11, f12, v11, v12, IL11, IL12, S1))
-    p2 = multiprocessing.Process(target=scs.SecureCS, args=(f21, f22, v21, v22, IL21, IL22, S2))
+    scs.Preprocess(program_number1, filename1, program_number2, filename2)
+    print("Preprocess done")
+    p0 = multiprocessing.Process(target=scs.Run, args=[S0])
+    p1 = multiprocessing.Process(target=scs.Run, args=[S1])
+    p2 = multiprocessing.Process(target=scs.Run, args=[S2])
 
     p0.start()
     p1.start()

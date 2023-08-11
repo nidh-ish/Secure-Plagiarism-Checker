@@ -4,10 +4,11 @@ from fpv import *
 import math
 
 def Write2File(f0, f1, f2, inp1, v1):
-    f0.write(f"3\n")
-    f1.write(f"3\n")
-    f2.write(f"3\n")
-    for i in range(3):
+    L = len(inp1)
+    f0.write(f"{L}\n")
+    f1.write(f"{L}\n")
+    f2.write(f"{L}\n")
+    for i in range(L):
         l1 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
         l2 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
         m = l1 ^ l2 ^ inp1[i] 
@@ -15,10 +16,10 @@ def Write2File(f0, f1, f2, inp1, v1):
         f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
         f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
 
-    for i in range(3):
+    for i in range(L):
         l1 = int2ba(random.randint(0, 2**61 - 2), length=61)
         l2 = int2ba(random.randint(0, 2**61 - 2), length=61)
-        m = int2ba((ba2int(l1) + ba2int(l2) + v1[i])%(2**61-1), length=61) 
+        m = int2ba((ba2int(l1) + ba2int(l2) + v1[0])%(2**61-1), length=61) 
         f0.write(f"{ba2base(2, l1)} {ba2base(2, l2)}\n")
         f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
         f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
@@ -68,10 +69,11 @@ f1 = open("Client1_Server1_v2.dat", "w+")
 f2 = open("Client1_Server2_v2.dat", "w+")
 inp1 = [bitarray("01010100011101110110111100100000010011110110111001100101001000000100111001101001011011100110010100100000010101000111011101101111"), bitarray("00000010100001001100111000111011111000010110100100000000111110101101110011101010010011000001111110000001010100101111110110010001"), bitarray("10100111010110011100100101111000001000110110101100000110111011011100010000101001101100010011100100101111110100101110100100011100")]
 inp2 = [bitarray("11001111101111011111001011100100010111000100001000111001111011111110100110010111101100110111001100101101000110100110001000110100"), bitarray("10100111010110011100100101111000001000110110101100000110111011011100010000101001101100010011100100101111110100101110100100011100"), bitarray("01010100011101110110111100100000010011110110111001100101001000000100111001101001011011100110010100100000010101000111011101101111")]
+inptemp = [bitarray("01010100011101110110111100100000010011110110111001100101001000000100111001101001011011100110010100100000010101000111011101101111"), bitarray("01010100011101110110111100100000010011110110111001100101001000000100111001101001011011100110010100100000010101000111011101101111")]
 v1 = [1, 2, 3]
 v2 = [2, 4, 5]
 
-Write2File(f0, f1, f2, inp1, v1)
+Write2File(f0, f1, f2, inptemp, v1)
 f0.close()
 f1.close()
 f2.close()
@@ -80,7 +82,7 @@ f0 = open("Client2_Server0_v2.dat", "w+")
 f1 = open("Client2_Server1_v2.dat", "w+")
 f2 = open("Client2_Server2_v2.dat", "w+")
 
-Write2File(f0, f1, f2, inp2, v2)
+Write2File(f0, f1, f2, inptemp, v2)
 f0.close()
 f1.close()
 f2.close()

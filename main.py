@@ -65,55 +65,76 @@ class SecureCosineSimilarity:
         return f, v, ILS
 
     def runAESonList(self, f: list[Share], k: Share, S: Server, aes: AES) -> list[Share]:
-        outputs = []
+        
         if S.id() == 0:
             # Offline begins
-            kl1, kl2 = k.get()
+            lambda1 = []
+            lambda2 = []
+            outputs = []
             for fingerprint in f:
                 s0 = Share()
                 l1, l2 = fingerprint.get()
-                aes.circuit_offline([kl1.copy() , kl2.copy()], [l1 , l2], S, s0)
-                print("0, AESdone offline")
+                lambda1.append(l1)
+                lambda2.append(l2)
                 outputs.append(s0)
+            kl1, kl2 = k.get()
+            offline_output = aes.circuit_offline([kl1.copy() , kl2.copy()], [lambda1.copy() , lambda2.copy()], S, outputs)
+            print("0, AESdone offline")
             S.complete_optimised_offline()
+            # Online begins
+            # for i in range(len(outputs)):
+            #     s = outputs[i].get()
+            #     x = S.online_reconstruction(s[0], s[1])
+            #     print(ba2hex(x))
+            return outputs
 
         if S.id() == 1:
             # Offline begins
             kl1, km = k.get()
+            lambda1 = []
+            m1 = []
+            outputs = []
             for fingerprint in f:
                 s1 = Share()
                 l1, m = fingerprint.get()
-                aes.circuit_offline([kl1.copy() , km.copy()], [l1 , m], S, s1)
-                print("1, AESdone offline")
+                lambda1.append(l1)
+                m1.append(m)
                 outputs.append(s1)
-            # Online begins
-            i=0
-            for fingerprint in f:
-                s1 = Share()
-                l1, m = fingerprint.get()
-                aes.circuit_online([kl1.copy() , km.copy()], [l1 , m], S, outputs[i])
-                print("1, AESdone online")
-                i+=1
+
+            offline_output = aes.circuit_offline([kl1.copy() , km.copy()], [lambda1.copy() , m1.copy()], S, outputs)
+            print("1, AESdone offline")
+            online_output = aes.circuit_online([kl1.copy() , km.copy()], [lambda1.copy(), m1.copy()], S, outputs)
+            print("1, AESdone online")
+            # for i in range(len(outputs)):
+            #     s = outputs[i].get()
+            #     x = S.online_reconstruction(s[0], s[1])
+            return outputs
 
         if S.id() == 2:
             # Offline begins
-            kl2, km = k.get()
+            lambda2 = []
+            m2 = []
+            outputs = []
             for fingerprint in f:
                 s2 = Share()
                 l2, m = fingerprint.get()
-                aes.circuit_offline([kl2.copy() , km.copy()], [l2 , m], S, s2)
-                print("2, AESdone offline")
+                lambda2.append(l2)
+                m2.append(m)
                 outputs.append(s2)
+            kl2, km = k.get()
+
+            offline_output = aes.circuit_offline([kl2.copy() , km.copy()], [lambda2.copy() , m2.copy()], S, outputs)
+            print("2, AESdone offline")
             S.complete_optimised_offline()
+
             # Online begins
-            i = 0
-            for fingerprint in f:
-                s2 = Share()
-                l2, m = fingerprint.get()
-                aes.circuit_online([kl2.copy() , km.copy()], [l2 , m], S, outputs[i])
-                print("2, AESdone online")
-                i+=1
-        return outputs
+
+            online_output = aes.circuit_online([kl2.copy() , km.copy()], [lambda2.copy() , m2.copy()], S, outputs)
+            print("2, AESdone online")
+            # for i in range(len(outputs)):
+            #     s = outputs[i].get()
+            #     x = S.online_reconstruction(s[0], s[1])
+            return outputs
 
     def reconstructList(self, f: list[Share], S: Server):
         output = []

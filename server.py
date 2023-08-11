@@ -338,6 +338,37 @@ class Server0(Server):
 
         return lambda_c1, lambda_c2
     
+    def multibit_optimised_offline_AND(self, a, b, l):
+        a = bitarray(str(a))
+        b = bitarray(str(b))
+        lambda_c1 = self.nextp_randomness(l)
+        g1 = self.nextp_randomness(l)
+        lambda_c2 = self.prevp_randomness(l)
+
+        g2 = (a & b) ^ g1
+
+        # Send g2 to Server2
+        # self.messenger_prev.prevp_send(g2)
+        self.__L[3].append(g2)
+
+        return lambda_c1 ^ lambda_c2
+    
+    def multibit_optimised_offline_AND1(self, a, b, l):
+        a = bitarray(str(a))
+        b = bitarray(str(b))
+
+        lambda_c1 = self.nextp_randomness(l)
+        g1 = self.nextp_randomness(l)
+        lambda_c2 = self.prevp_randomness(l)
+
+        g2 = (a & b) ^ g1
+
+        # Send g2 to Server2
+        # self.messenger_prev.prevp_send(g2)
+        self.__L[3].append(g2)
+
+        return lambda_c1, lambda_c2
+    
     def complete_optimised_offline(self):
         self.messenger_prev.prevp_send(self.__L[3].copy())
         self.__L[3] = []
@@ -641,6 +672,34 @@ class Server1(Server):
         
         return [lambda_c1]
 
+    def mulitbit_optimised_offline_AND(self, a, b, l):
+        a = bitarray(str(a))
+        b = bitarray(str(b))
+        self.__L[0].append(a)
+        self.__L[1].append(b)
+
+        lambda_c1 = self.prevp_randomness(l)
+        self.__L[2].append(lambda_c1)
+
+        g1 = self.prevp_randomness(l)
+        self.__L[3].append(g1)
+        return lambda_c1
+
+    def mulitbit_optimised_offline_AND1(self, a, b, l):
+        a = bitarray(str(a))
+        b = bitarray(str(b))
+        self.__L[0].append(a)
+        self.__L[1].append(b)
+
+        lambda_c1 = self.prevp_randomness(l)
+        self.__L[2].append(lambda_c1)
+
+        g1 = self.prevp_randomness(l)
+        self.__L[3].append(g1)
+
+        
+        return [lambda_c1]
+
     def online_AND(self, a, b):
         a = bitarray(str(a))
         b = bitarray(str(b))
@@ -691,14 +750,6 @@ class Server1(Server):
 
         m1 = (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
 
-        # # Send m1 to Server2
-        # self.messenger_next.nextp_send(m1)
-
-        # # Receive m2 from Server2
-        # m2 = self.messenger_next.nextp_receive()
-        # while m2 == None:
-        #     m2 = self.messenger_next.nextp_receive()
-
         return m1
     
     def optimised_online_AND1(self, a, b):
@@ -710,14 +761,6 @@ class Server1(Server):
         temp4 = self.__L[3].pop(0)
 
         m1 = (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
-
-        # # Send m1 to Server2
-        # self.messenger_next.nextp_send(m1)
-
-        # # Receive m2 from Server2
-        # m2 = self.messenger_next.nextp_receive()
-        # while m2 == None:
-        #     m2 = self.messenger_next.nextp_receive()
 
         return [m1]
     
@@ -1059,6 +1102,28 @@ class Server2(Server):
         
         return [lambda_c2]
     
+    def multibit_optimised_offline_AND(self, a, b, l):
+        a = bitarray(str(a))
+        b = bitarray(str(b))
+        self.__L[0].append(a)
+        self.__L[1].append(b)
+
+        lambda_c2 = self.nextp_randomness(l)
+        self.__L[2].append(lambda_c2)
+        
+        return lambda_c2
+
+    def multibit_optimised_offline_AND1(self, a, b, l):
+        a = bitarray(str(a))
+        b = bitarray(str(b))
+        self.__L[0].append(a)
+        self.__L[1].append(b)
+
+        lambda_c2 = self.nextp_randomness(l)
+        self.__L[2].append(lambda_c2)
+        
+        return [lambda_c2]
+
     def complete_optimised_offline(self):
         # receive g2 from Server0
         g2 = self.messenger_next.nextp_receive()
@@ -1116,14 +1181,6 @@ class Server2(Server):
 
         m2 = (a & b) ^ (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
 
-        # Send m2 to Server1
-        # self.messenger_prev.prevp_send(m2)
-
-        # # Receive m1 from Server1
-        # m1 = self.messenger_prev.prevp_receive()
-        # while m1 == None:
-        #     m1 = self.messenger_prev.prevp_receive()
-
         return m2
     
     def optimised_online_AND1(self, a, b):
@@ -1135,14 +1192,6 @@ class Server2(Server):
         temp4 = self.__L[3].pop(0)
 
         m2 = (a & b) ^ (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
-
-        # Send m2 to Server1
-        # self.messenger_prev.prevp_send(m2)
-
-        # # Receive m1 from Server1
-        # m1 = self.messenger_prev.prevp_receive()
-        # while m1 == None:
-        #     m1 = self.messenger_prev.prevp_receive()
 
         return [m2]
     

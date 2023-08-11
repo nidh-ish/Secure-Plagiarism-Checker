@@ -62,7 +62,7 @@ class AES:
 
         return output
 
-    def SBox(self, input: bitarray(8), AND, AND1, OR) -> bitarray(8):
+    def SBox_offline(self, input: bitarray(8), AND, AND1, OR) -> bitarray(8):
 
         t = bitarray(28)
         m = bitarray(64)
@@ -230,6 +230,217 @@ class AES:
         else:
             return [out1, out2]
 
+    def SBox_online(self, input: bitarray(8), AND, AND1, OR, Serv: Server1 | Server2) -> bitarray(8):
+
+        t = bitarray(28)
+        m = bitarray(64)
+        L = [[]]*30
+        S = [[]]*8
+        M = [[]]*18
+
+        output = [[]]*8
+        out1 = bitarray(8)
+        out2 = bitarray(8)
+
+        # Top linear layer
+        t[1] = input[0] ^ input[3] 
+        t[2] = input[0] ^ input[5]
+        t[3] = input[0] ^ input[6]
+        t[4] = input[3] ^ input[5]
+        t[5] = input[4] ^ input[6]
+        t[6] = t[1] ^ t[5]
+        t[7] = input[1] ^ input[2]
+        t[8] = input[7] ^ t[6]
+        t[9] = input[7] ^ t[7]
+        t[10] = t[6] ^ t[7]
+        t[11] = input[1] ^ input[5]
+        t[12] = input[2] ^ input[5]
+        t[13] = t[3] ^ t[4]
+        t[14] = t[6] ^ t[11]
+        t[15] = t[5] ^ t[11]
+        t[16] = t[5] ^ t[12]
+        t[17] = t[9] ^ t[16]
+        t[18] = input[3] ^ input[7]
+        t[19] = t[7] ^ t[18]
+        t[20] = t[1] ^ t[19]
+        t[21] = input[6] ^ input[7]
+        t[22] = t[7] ^ t[21]
+        t[23] = t[2] ^ t[22]
+        t[24] = t[2] ^ t[10]
+        t[25] = t[20]^ t[17]
+        t[26] = t[3] ^ t[16]
+        t[27] = t[1] ^ t[12]
+
+        # Middle non-linear - depth 1 start
+        temp = [AND(t[13], t[6]),
+        AND(t[23], t[8]),
+        AND(t[19], input[7]),
+        AND(t[3], t[16]),
+        AND(t[22], t[9]),
+        AND(t[20], t[17]),
+        AND(t[1], t[15]),
+        AND(t[4], t[27]),
+        AND(t[2], t[10])]
+        temp2 = Serv.complete_optimised_online(temp)
+        m[1] = ba2int(temp[0] ^ temp2[0])
+        m[2] = ba2int(temp[1] ^ temp2[1])
+        m[4] = ba2int(temp[2] ^ temp2[2])
+        m[6] = ba2int(temp[3] ^ temp2[3])
+        m[7] = ba2int(temp[4] ^ temp2[4])
+        m[9] = ba2int(temp[5] ^ temp2[5])
+        m[11] = ba2int(temp[6] ^ temp2[6])
+        m[12] = ba2int(temp[7] ^ temp2[7])
+        m[14] = ba2int(temp[8] ^ temp2[8])
+
+        m[3] = t[14] ^ m[1]
+        m[5] = m[4] ^ m[1]
+        m[8] = t[26] ^ m[6]
+        m[10] = m[9] ^ m[6]
+        m[13] = m[12] ^ m[11]
+        m[15] = m[14] ^ m[11]
+        m[16] = m[3] ^ m[2]
+        m[17] = m[5] ^ t[24]
+        m[18] = m[8] ^ m[7]
+        m[19] = m[10] ^ m[15]
+        m[20] = m[16] ^ m[13]
+        m[21] = m[17] ^ m[15]
+        m[22] = m[18] ^ m[13]
+        m[23] = m[19] ^ t[25]
+        m[24] = m[22] ^ m[23]
+        m[27] = m[20] ^ m[21]
+  
+        # depth 2 starts here
+        temp = [
+        AND(m[22], m[20]),
+        AND(m[20], m[23]),
+        AND(m[21], m[22])]
+        temp2 = Serv.complete_optimised_online(temp)
+        m[25] = ba2int(temp[0] ^ temp2[0])
+        m[31] = ba2int(temp[1] ^ temp2[1])
+        m[34] = ba2int(temp[2] ^ temp2[2])
+
+        m[26] = m[21] ^ m[25]
+        m[28] = m[23] ^ m[25]
+        m[33] = m[27] ^ m[25]
+        m[36] = m[24] ^ m[25]
+
+        # depth 3 start
+        temp = [AND(m[28], m[27]),
+        AND(m[26], m[24]),
+        AND(m[27], m[31]),
+        AND(m[24], m[34])]
+        temp2 = Serv.complete_optimised_online(temp)
+        m[29] = ba2int(temp[0] ^ temp2[0])
+        m[30] = ba2int(temp[1] ^ temp2[1])
+        m[32] = ba2int(temp[2] ^ temp2[2])
+        m[35] = ba2int(temp[3] ^ temp2[3])
+        m[37] = m[21] ^ m[29]
+        m[38] = m[32] ^ m[33]
+        m[39] = m[23] ^ m[30] 
+        m[40] = m[35] ^ m[36] 
+        m[41] = m[38] ^ m[40]
+        m[42] = m[37] ^ m[39]
+        m[43] = m[37] ^ m[38]
+        m[44] = m[39] ^ m[40] 
+        m[45] = m[42] ^ m[41]
+
+        # depth 4 start
+
+        temp = [AND1(m[44], t[6]),
+        AND1(m[40], t[8]),
+        AND1(m[39], input[7]),
+        AND1(m[43], t[16]),
+        AND1(m[38], t[9]),
+        AND1(m[37], t[17]),
+        AND1(m[42], t[15]),
+        AND1(m[45], t[27]),
+        AND1(m[41], t[10]),
+        AND1(m[44], t[13]),
+        AND1(m[40], t[23]),
+        AND1(m[39], t[19]),
+        AND1(m[43], t[3]),
+        AND1(m[38], t[22]),
+        AND1(m[37], t[20]),
+        AND1(m[42], t[1]),
+        AND1(m[45], t[4]),
+        AND1(m[41], t[2])]
+        temp2 = Serv.complete_optimised_online(temp)
+        M[0] = OR(temp[0], temp2[0])
+        M[1] = OR(temp[1], temp2[1])
+        M[2] = OR(temp[2], temp2[2])
+        M[3] = OR(temp[3], temp2[3])
+        M[4] = OR(temp[4], temp2[4])
+        M[5] = OR(temp[5], temp2[5])
+        M[6] = OR(temp[6], temp2[6])
+        M[7] = OR(temp[7], temp2[7])
+        M[8] = OR(temp[8], temp2[8])
+        M[9] = OR(temp[9], temp2[9])
+        M[10] = OR(temp[10], temp2[10])
+        M[11] = OR(temp[11], temp2[11])
+        M[12] = OR(temp[12], temp2[12])
+        M[13] = OR(temp[13], temp2[13])
+        M[14] = OR(temp[14], temp2[14])
+        M[15] = OR(temp[15], temp2[15])
+        M[16] = OR(temp[16], temp2[16])
+        M[17] = OR(temp[17], temp2[17])
+
+        # Bottom linear
+        L[0] = OR(M[15], M[16])
+        L[1] = OR(M[4], M[10])
+        L[2] = OR(M[0], M[2])
+        L[3] = OR(M[1], M[9])
+        L[4] = OR(M[8], M[12])
+        L[5] = OR(M[3], M[15])
+        L[6] = OR(M[16], L[5])
+        L[7] = OR(M[0], L[3])
+        L[8] = OR(M[5], M[13])
+        L[9] = OR(M[6], M[7])
+        L[10] = OR(M[7], L[4])
+        L[11] = OR(M[14], L[2])
+        L[12] = OR(M[2], M[5])
+        L[13] = OR(M[4], L[0])
+        L[14] = OR(M[6], M[15])
+        L[15] = OR(M[9], L[1])
+        L[16] = OR(M[10], L[0])
+        L[17] = OR(M[11], L[1])
+        L[18] = OR(M[12], L[8])
+        L[19] = OR(M[17], L[4])
+        L[20] = OR(L[0], L[1])
+        L[21] = OR(L[1], L[7])
+        L[22] = OR(L[3], L[12])
+        L[23] = OR(L[18], L[2])
+        L[24] = OR(L[15], L[9])
+        L[25] = OR(L[6], L[10])
+        L[26] = OR(L[7], L[9])
+        L[27] = OR(L[8], L[10])
+        L[28] = OR(L[11], L[14])
+        L[29] = OR(L[11], L[17])
+        S[0] = OR(L[6], L[24])
+        S[1] = OR(L[16], L[26])
+        S[2] = OR(L[19], L[28])
+        S[3] = OR(L[6], L[21])
+        S[4] = OR(L[20], L[22])
+        S[5] = OR(L[25], L[29])
+        S[6] = OR(L[13], L[27])
+        S[7] = OR(L[6], L[23])
+        S[1] = OR(S[1], (bitarray("1"), bitarray("1")))
+        S[2] = OR(S[2], (bitarray("1"), bitarray("1")))
+        S[6] = OR(S[6], (bitarray("1"), bitarray("1")))
+        S[7] = OR(S[7], (bitarray("1"), bitarray("1")))
+
+        for i in range(8):
+            output[i] = S[i]
+            if(len(S[i]) == 1):  
+                out1[i] = ba2int(output[i][0])
+            else:
+                out1[i] = ba2int(output[i][0])
+                out2[i] = ba2int(output[i][1])
+        
+        if(len(S[0]) == 1):
+            return out1
+        else:
+            return [out1, out2]
+
     def R(self, round):
         a = []
         temp = bitarray("00000001")
@@ -257,7 +468,7 @@ class AES:
             input1 = bitarray(32)
             input2 = bitarray(32)
             for i in range(4):
-                temp = self.SBox(input[8*i:8*i + 8], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
+                temp = self.SBox_offline(input[8*i:8*i + 8], S.optimised_offline_AND, S.optimised_offline_AND1, S.OR) # Byte Substitution
                 input1[8*i:8*i + 8] = temp[0]
                 input2[8*i:8*i + 8] = temp[1]
             v01 = input1[0:8]
@@ -271,7 +482,7 @@ class AES:
 
         else:
             for i in range(4):
-                input[8*i:8*i + 8] = self.SBox(input[8*i:8*i + 8], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
+                input[8*i:8*i + 8] = self.SBox_offline(input[8*i:8*i + 8], S.optimised_offline_AND, S.optimised_offline_AND1, S.OR) # Byte Substitution
             v0 = input[0:8]
             v0 = v0 ^ self.R(round - 1)
             input[0:8] = v0
@@ -292,7 +503,7 @@ class AES:
 
         output = []
         for i in range(4):
-            input[8*i:8*i + 8] = self.SBox(input[8*i:8*i + 8], S.online_AND, S.online_AND1, S.OR) # Byte Substitution
+            input[8*i:8*i + 8] = self.SBox_online(input[8*i:8*i + 8], S.optimised_online_AND, S.optimised_online_AND1, S.OR, S) # Byte Substitution
         v0 = input[0:8]
         v0 = v0 ^ self.R(round - 1)
         input[0:8] = v0
@@ -388,13 +599,12 @@ class AES:
         output.append(key)
         return output
         
-    def circuit(self, k: list[bitarray], m: list[bitarray], S:Server, output: Share) -> bitarray:
+    def circuit_offline(self, k: list[bitarray], m: list[bitarray], S:Server, output: Share) -> bitarray:
         
         state = None
 
         # For Server 0
         if S.id() == 0:
-
         #Offline begins
             message = m.copy()
             key = k.copy()
@@ -402,7 +612,7 @@ class AES:
         
             for i in range(9):
                 for j in range(16):
-                    temp = self.SBox(state[8*j:8*(j+1)], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
+                    temp = self.SBox_offline(state[8*j:8*(j+1)], S.optimised_offline_AND, S.optimised_offline_AND1, S.OR) # Byte Substitution
                     state[8*j:8*(j+1)] = temp[0] ^ temp[1]
                 state = self.ShiftRow(state) # Shift Row
                 state = self.MixColumn(state) # Mix Columns
@@ -417,7 +627,7 @@ class AES:
             state2 = bitarray(128)
 
             for i in range(16):
-                temp = self.SBox(state[8*i:8*i + 8], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
+                temp = self.SBox_offline(state[8*i:8*i + 8], S.optimised_offline_AND, S.optimised_offline_AND1, S.OR) # Byte Substitution
                 state1[8*i:8*i + 8] = temp[0]
                 state2[8*i:8*i + 8] = temp[1]
 
@@ -432,6 +642,7 @@ class AES:
             state2 = state2 ^ key[1]
             output.add(state1)
             output.add(state2)
+            # S.complete_optimised_offline()
         #Offline ends
 
 
@@ -445,7 +656,7 @@ class AES:
 
             for i in range(9):
                 for j in range(16):
-                    state[8*j:8*(j+1)] = self.SBox(state[8*j:8*(j+1)], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
+                    state[8*j:8*(j+1)] = self.SBox_offline(state[8*j:8*(j+1)], S.optimised_offline_AND, S.optimised_offline_AND1, S.OR) # Byte Substitution
 
                 state = self.ShiftRow(state) # Shift Row
                 state = self.MixColumn(state) # Mix Columns
@@ -456,7 +667,7 @@ class AES:
                 state = state ^ key # Key Addition
 
             for i in range(16):
-                state[8*i:8*i + 8] = self.SBox(state[8*i:8*i + 8], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution            
+                state[8*i:8*i + 8] = self.SBox_offline(state[8*i:8*i + 8], S.optimised_offline_AND, S.optimised_offline_AND1, S.OR) # Byte Substitution            
 
             state = self.ShiftRow(state) # Shift Row
 
@@ -469,6 +680,46 @@ class AES:
             output.add(offline_output)
         #Offline ends
 
+        # For Server 2
+        if S.id() == 2:
+
+        #Offline begins
+            message = m[0].copy()
+            key = k[0].copy()
+            state = message ^ key # Key Addition
+        
+            for i in range(9):
+                for j in range(16):
+                    state[8*j:8*(j+1)] = self.SBox_offline(state[8*j:8*(j+1)], S.optimised_offline_AND, S.optimised_offline_AND1, S.OR) # Byte Substitution
+                
+                state = self.ShiftRow(state) # Shift Row
+                state = self.MixColumn(state) # Mix Columns
+
+                temp = self.KeyGen_offline(key, i + 1, S) # Key Generation
+                key = temp[0]
+
+                state = state ^ key # Key Addition
+                
+            for i in range(16):
+                state[8*i:8*i + 8] = self.SBox_offline(state[8*i:8*i + 8], S.optimised_offline_AND, S.optimised_offline_AND1, S.OR) # Byte Substitution
+            
+            state = self.ShiftRow(state) # Shift Row
+
+            temp = self.KeyGen_offline(key, 10, S) # Final round key generation
+            key = temp[0]
+
+            state = state ^ key # Key Addition
+        
+            offline_output = state
+            # S.complete_optimised_offline()
+            output.add(offline_output)
+        # Offline ends
+        
+    def circuit_online(self, k: list[bitarray], m: list[bitarray], S:Server, output: Share) -> bitarray:
+        
+        state = None
+        # For Server 1
+        if S.id() == 1:
         #Online begins
             message = m[1].copy()
             key = k[1].copy()
@@ -476,7 +727,7 @@ class AES:
         
             for i in range(9):
                 for j in range(16):
-                    state[8*j:8*(j+1)] = self.SBox(state[8*j:8*(j+1)], S.online_AND, S.online_AND1, S.OR) # Byte Substitution
+                    state[8*j:8*(j+1)] = self.SBox_online(state[8*j:8*(j+1)], S.optimised_online_AND, S.optimised_online_AND1, S.OR, S) # Byte Substitution
 
                 state = self.ShiftRow(state) # Shift Row
                 state = self.MixColumn(state) # Mix Columns
@@ -487,7 +738,7 @@ class AES:
                 state = state ^ key # Key Addition
 
             for i in range(16):
-                state[8*i:8*i + 8] = self.SBox(state[8*i:8*i + 8], S.online_AND, S.online_AND1, S.OR) # Byte Substitution
+                state[8*i:8*i + 8] = self.SBox_online(state[8*i:8*i + 8], S.optimised_online_AND, S.optimised_online_AND1, S.OR, S) # Byte Substitution
 
             state = self.ShiftRow(state) # Shift Row
 
@@ -502,38 +753,6 @@ class AES:
 
         # For Server 2
         if S.id() == 2:
-
-        #Offline begins
-            message = m[0].copy()
-            key = k[0].copy()
-            state = message ^ key # Key Addition
-        
-            for i in range(9):
-                for j in range(16):
-                    state[8*j:8*(j+1)] = self.SBox(state[8*j:8*(j+1)], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
-                
-                state = self.ShiftRow(state) # Shift Row
-                state = self.MixColumn(state) # Mix Columns
-
-                temp = self.KeyGen_offline(key, i + 1, S) # Key Generation
-                key = temp[0]
-
-                state = state ^ key # Key Addition
-                
-            for i in range(16):
-                state[8*i:8*i + 8] = self.SBox(state[8*i:8*i + 8], S.offline_AND, S.offline_AND1, S.OR) # Byte Substitution
-            
-            state = self.ShiftRow(state) # Shift Row
-
-            temp = self.KeyGen_offline(key, 10, S) # Final round key generation
-            key = temp[0]
-
-            state = state ^ key # Key Addition
-        
-            offline_output = state
-            output.add(offline_output)
-        # Offline ends
-
         #Online begins
             message = m[1].copy()
             key = k[1].copy()
@@ -542,7 +761,7 @@ class AES:
             for i in range(9):
 
                 for j in range(16):
-                    state[8*j:8*(j+1)] = self.SBox(state[8*j:8*(j+1)], S.online_AND, S.online_AND1, S.OR) # Byte Substitution
+                    state[8*j:8*(j+1)] = self.SBox_online(state[8*j:8*(j+1)], S.optimised_online_AND, S.optimised_online_AND1, S.OR, S) # Byte Substitution
                 
                 state = self.ShiftRow(state) # Shift Row
                 state = self.MixColumn(state) # Mix Columns
@@ -553,7 +772,7 @@ class AES:
                 state = state ^ key # Key Addition
 
             for i in range(16):
-                state[8*i:8*i + 8] = self.SBox(state[8*i:8*i + 8], S.online_AND, S.online_AND1, S.OR) # Byte Substitution
+                state[8*i:8*i + 8] = self.SBox_online(state[8*i:8*i + 8], S.optimised_online_AND, S.optimised_online_AND1, S.OR, S) # Byte Substitution
             
             state = self.ShiftRow(state) # Shift Row
             
@@ -565,17 +784,103 @@ class AES:
             online_output = state        
             output.add(online_output)
         #Online ends
-        
 
-# if __name__=='__main__':
-#     # message = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
-#     message = bitarray("01010100011101110110111100100000010011110110111001100101001000000100111001101001011011100110010100100000010101000111011101101111")
-#     print("Message: ", ba2hex(message))
 
-#     # key = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
-#     key = bitarray("01010100011010000110000101110100011100110010000001101101011110010010000001001011011101010110111001100111001000000100011001110101")
-#     print("Key: ", ba2hex(key))
+def RunAES(k: list[bitarray], m: list[bitarray], S:Server):
+    aes = AES()
+    if S.id() == 0:
+        output = Share()
+        aes.circuit_offline(k, m, S, output)
+        S.complete_optimised_offline()
+        o = output.get()
+        print(ba2hex(o[0]), ba2hex(o[1]))
+        p = S.online_reconstruction(o[0], o[1])
+        print(ba2hex(p))
+    elif S.id() == 1:
+        output = Share()
+        aes.circuit_offline(k, m, S, output)
+        aes.circuit_online(k, m, S, output)
+        o = output.get()
+        print(ba2hex(o[0]), ba2hex(o[1]))
+        S.online_reconstruction(o[0], o[1])
+    else:
+        output = Share()
+        aes.circuit_offline(k, m, S, output)
+        S.complete_optimised_offline()
+        aes.circuit_online(k, m, S, output)
+        o = output.get()
+        print(ba2hex(o[0]), ba2hex(o[1]))
+        S.online_reconstruction(o[0], o[1])
 
-#     aes = AES()
-#     ciphertext = aes.circuit(key, message)
-#     print("Ciphertext: ", ba2hex(ciphertext))
+if __name__=='__main__':
+    # message = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+    message = bitarray("01010100011101110110111100100000010011110110111001100101001000000100111001101001011011100110010100100000010101000111011101101111")
+    print("Message: ", ba2hex(message))
+    l1 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+    l2 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+    m = l1 ^ l2 ^ message
+
+    # key = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+    key = bitarray("01010100011010000110000101110100011100110010000001101101011110010010000001001011011101010110111001100111001000000100011001110101")
+    print("Key: ", ba2hex(key))
+    k1 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+    k2 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+    mk = k1 ^ k2 ^ key
+
+
+    # Messenger between Server0 and Server1
+    M01 = Messenger()
+    # Messenger between Server0 and Server2
+    M02 = Messenger()
+    # Messenger between Server1 and Server2
+    M12 = Messenger()
+
+    # Generate random value for Server0 and Server1
+    r01 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+
+    # Generate random value for Server0 and Server2
+    r02 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+
+    # Generate random value for Server1 and Server2
+    r12 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+
+    # Generate random value for Server0, Server1, and Server2
+    r_common = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+
+    # Instantiate the servers
+    S0 = Server0(r01, r02, r_common, M02, M01)
+    S1 = Server1(r01, r12, r_common, M01, M12)
+    S2 = Server2(r02, r12, r_common, M12, M02)
+
+    aes = AES()
+    o0 = Share()
+    o1 = Share()
+    o2 = Share()
+
+    p0 = multiprocessing.Process(target=RunAES, args=([k1, k2], [l1, l2], S0))
+    p1 = multiprocessing.Process(target=RunAES, args=([k1, mk], [l1, m], S1))
+    p2 = multiprocessing.Process(target=RunAES, args=([k2, mk], [l2, m], S2))
+
+    p0.start()
+    p1.start()
+    p2.start()
+
+    p0.join()
+    p1.join()
+    p2.join()
+
+    # p0 = multiprocessing.Process(target=aes.circuit_online, args=([k1, k2], [l1, l2], S0, o0))
+    # p1 = multiprocessing.Process(target=aes.circuit_online, args=([k1, mk], [l1, m], S1, o1))
+    # p2 = multiprocessing.Process(target=aes.circuit_online, args=([k2, mk], [l2, m], S2, o2))
+
+    # p0.start()
+    # p1.start()
+    # p2.start()
+
+    # p0.join()
+    # p1.join()
+    # p2.join()
+
+    # o0 = o0.get()
+    # o2 = o2.get()
+    # print(ba2hex(o0[0] ^ o0[1] ^ o2[1]))

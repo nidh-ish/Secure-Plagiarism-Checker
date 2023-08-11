@@ -67,34 +67,52 @@ class SecureCosineSimilarity:
     def runAESonList(self, f: list[Share], k: Share, S: Server, aes: AES) -> list[Share]:
         outputs = []
         if S.id() == 0:
+            # Offline begins
             kl1, kl2 = k.get()
             for fingerprint in f:
                 s0 = Share()
                 l1, l2 = fingerprint.get()
-                aes.circuit([kl1 , kl2], [l1 , l2], S, s0)
+                aes.circuit_offline([kl1.copy() , kl2.copy()], [l1 , l2], S, s0)
+                print("0, AESdone offline")
                 outputs.append(s0)
-                print("0, AESdone")
+            S.complete_optimised_offline()
 
         if S.id() == 1:
+            # Offline begins
             kl1, km = k.get()
-            outputs = []
             for fingerprint in f:
                 s1 = Share()
                 l1, m = fingerprint.get()
-                aes.circuit([kl1 , km], [l1 , m], S, s1)
+                aes.circuit_offline([kl1.copy() , km.copy()], [l1 , m], S, s1)
+                print("1, AESdone offline")
                 outputs.append(s1)
-                print("1, AESdone")
+            # Online begins
+            i=0
+            for fingerprint in f:
+                s1 = Share()
+                l1, m = fingerprint.get()
+                aes.circuit_online([kl1.copy() , km.copy()], [l1 , m], S, outputs[i])
+                print("1, AESdone online")
+                i+=1
 
         if S.id() == 2:
+            # Offline begins
             kl2, km = k.get()
-            outputs = []
             for fingerprint in f:
                 s2 = Share()
                 l2, m = fingerprint.get()
-                aes.circuit([kl2 , km], [l2 , m], S, s2)
+                aes.circuit_offline([kl2.copy() , km.copy()], [l2 , m], S, s2)
+                print("2, AESdone offline")
                 outputs.append(s2)
-                print("2, AESdone")
-        
+            S.complete_optimised_offline()
+            # Online begins
+            i = 0
+            for fingerprint in f:
+                s2 = Share()
+                l2, m = fingerprint.get()
+                aes.circuit_online([kl2.copy() , km.copy()], [l2 , m], S, outputs[i])
+                print("2, AESdone online")
+                i+=1
         return outputs
 
     def reconstructList(self, f: list[Share], S: Server):
@@ -211,7 +229,15 @@ class SecureCosineSimilarity:
             
             # Getting the numerator of CS using the common fingerprints
             Num = self.getNumerator(61, shufV1, shufV2, commonindices, S)
+            p = S.online_reconstructionF(61, Num.get()[0], Num.get()[1])
+            print("num", p)
             floatnum = fpv.int2FPV(Num, S)
+            p = fpv.FPVonline_reconstruction2Float(floatnum, S)
+            print("num", p)
+            p = fpv.FPVonline_reconstruction2Float(Linv1, S)
+            print("in1", p)
+            p = fpv.FPVonline_reconstruction2Float(Linv2, S)
+            print("in2", p)
             tempcs = fpv.FPVMultiply(floatnum, Linv1, S)
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
@@ -257,7 +283,12 @@ class SecureCosineSimilarity:
             
             # Getting the numerator of CS using the common fingerprints
             Num = self.getNumerator(61, shufV1, shufV2, commonindices, S)
+            p = S.online_reconstructionF(61, Num.get()[0], Num.get()[1])
+
             floatnum = fpv.int2FPV(Num, S)
+            p = fpv.FPVonline_reconstruction2Float(floatnum, S)
+            p = fpv.FPVonline_reconstruction2Float(Linv1, S)
+            p = fpv.FPVonline_reconstruction2Float(Linv2, S)
             tempcs = fpv.FPVMultiply(floatnum, Linv1, S)
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
@@ -302,7 +333,11 @@ class SecureCosineSimilarity:
 
             # Getting the numerator of CS using the common fingerprints
             Num = self.getNumerator(61, shufV1, shufV2, commonindices, S)
+            p = S.online_reconstructionF(61, Num.get()[0], Num.get()[1])
             floatnum = fpv.int2FPV(Num, S)
+            p = fpv.FPVonline_reconstruction2Float(floatnum, S)
+            p = fpv.FPVonline_reconstruction2Float(Linv1, S)
+            p = fpv.FPVonline_reconstruction2Float(Linv2, S)
             tempcs = fpv.FPVMultiply(floatnum, Linv1, S)
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)

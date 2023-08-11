@@ -1,3 +1,7 @@
+Import(names=[alias(name='math')])
+Assign(targets=[Name(id='x', ctx=Store())], value=Call(func=Name(id='x', ctx=Load()), args=[], keywords=[]))
 Assign(targets=[Name(id='x', ctx=Store())], value=Call(func=Name(id='x', ctx=Load()), args=[], keywords=[]))
 Assign(targets=[Name(id='x', ctx=Store())], value=Call(func=Name(id='x', ctx=Load()), args=[Name(id='x', ctx=Load())], keywords=[]))
-If(test=Compare(left=Constant(value=5), ops=[LtE(), Lt()], comparators=[Name(id='x', ctx=Load()), Constant(value=18)]), body=[Expr(value=Call(func=Name(id='x', ctx=Load()), args=[Constant(value='child')], keywords=[]))], orelse=[If(test=Compare(left=Name(id='x', ctx=Load()), ops=[GtE()], comparators=[Constant(value=18)]), body=[Expr(value=Call(func=Name(id='x', ctx=Load()), args=[Constant(value='adult')], keywords=[]))], orelse=[If(test=Compare(left=Name(id='x', ctx=Load()), ops=[Lt()], comparators=[Constant(value=5)]), body=[Expr(value=Call(func=Name(id='x', ctx=Load()), args=[Constant(value='infant')], keywords=[]))], orelse=[])])])
+Assign(targets=[Name(id='x', ctx=Store())], value=Call(func=Name(id='x', ctx=Load()), args=[Name(id='x', ctx=Load())], keywords=[]))
+Assign(targets=[Name(id='x', ctx=Store())], value=Call(func=Attribute(value=Name(id='x', ctx=Load()), attr='sqrt', ctx=Load()), args=[BinOp(left=BinOp(left=Name(id='x', ctx=Load()), op=Mult(), right=Name(id='x', ctx=Load())), op=Add(), right=BinOp(left=Name(id='x', ctx=Load()), op=Mult(), right=Name(id='x', ctx=Load())))], keywords=[]))
+Expr(value=Call(func=Name(id='x', ctx=Load()), args=[Name(id='x', ctx=Load())], keywords=[]))

@@ -72,6 +72,19 @@ v1 = [1, 2, 3]
 v2 = [2, 4, 5]
 
 Write2File(f0, f1, f2, inp1, v1)
+f0.close()
+f1.close()
+f2.close()
+
+f0 = open("Client2_Server0_v2.dat", "w+")
+f1 = open("Client2_Server1_v2.dat", "w+")
+f2 = open("Client2_Server2_v2.dat", "w+")
+
+Write2File(f0, f1, f2, inp2, v2)
+f0.close()
+f1.close()
+f2.close()
+
 # for i in range(3):
 #     l1 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
 #     l2 = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
@@ -111,10 +124,6 @@ Write2File(f0, f1, f2, inp1, v1)
 #     f1.write(f"{ba2base(2, l1)} {ba2base(2, m)}\n")
 #     f2.write(f"{ba2base(2, l2)} {ba2base(2, m)}\n")
 
-
-f0.close()
-f1.close()
-f2.close()
 
 # def getSharesfromFile(f) -> list[Share]:
 #     line = f.readline()

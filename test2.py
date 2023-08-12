@@ -70,10 +70,10 @@ def runAESonList(f: list[Share], k: Share, S: Server, aes: AES) -> list[Share]:
         print("0, AESdone offline")
         S.complete_optimised_offline()
         # Online begins
-        # for i in range(len(outputs)):
-        #     s = outputs[i].get()
-        #     x = S.online_reconstruction(s[0], s[1])
-        #     print(ba2hex(x))
+        for i in range(len(outputs)):
+            s = outputs[i].get()
+            x = S.online_reconstruction(s[0], s[1])
+            print(ba2hex(x))
         return outputs
 
     if S.id() == 1:
@@ -93,9 +93,9 @@ def runAESonList(f: list[Share], k: Share, S: Server, aes: AES) -> list[Share]:
         print("1, AESdone offline")
         online_output = aes.circuit_online([kl1.copy() , km.copy()], [lambda1.copy(), m1.copy()], S, outputs)
         print("1, AESdone online")
-        # for i in range(len(outputs)):
-        #     s = outputs[i].get()
-        #     x = S.online_reconstruction(s[0], s[1])
+        for i in range(len(outputs)):
+            s = outputs[i].get()
+            x = S.online_reconstruction(s[0], s[1])
         return outputs
 
     if S.id() == 2:
@@ -119,9 +119,9 @@ def runAESonList(f: list[Share], k: Share, S: Server, aes: AES) -> list[Share]:
 
         online_output = aes.circuit_online([kl2.copy() , km.copy()], [lambda2.copy() , m2.copy()], S, outputs)
         print("2, AESdone online")
-        # for i in range(len(outputs)):
-        #     s = outputs[i].get()
-        #     x = S.online_reconstruction(s[0], s[1])
+        for i in range(len(outputs)):
+            s = outputs[i].get()
+            x = S.online_reconstruction(s[0], s[1])
         return outputs
 
 if __name__=='__main__':

@@ -201,7 +201,7 @@ class Server0(Server):
 
     def nextp_randomnessF(self, P: int, len: int) -> bitarray:
         random.seed(ba2int(self.__initRandom01))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandom01 = x
         temp = ba2int(x[0:len])
         p = 2**P-1
@@ -211,7 +211,7 @@ class Server0(Server):
 
     def prevp_randomnessF(self, P: int, len: int):
         random.seed(ba2int(self.__initRandom02))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandom02 = x
         temp = ba2int(x[0:len])
         p = 2**P-1
@@ -221,7 +221,7 @@ class Server0(Server):
 
     def common_randomnessF(self, P: int, len: int) -> bitarray:
         random.seed(ba2int(self.__initRandomCommon))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandomCommon = x
         temp = ba2int(x[0:len])
         p = 2**P-1
@@ -260,19 +260,19 @@ class Server0(Server):
 
     def nextp_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandom01))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandom01 = x
         return x[0:len]
 
     def prevp_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandom02))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandom02 = x
         return x[0:len]
 
     def common_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandomCommon))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandomCommon = x
         return x[0:len]
     
@@ -339,8 +339,6 @@ class Server0(Server):
         return lambda_c1, lambda_c2
     
     def multibit_optimised_offline_AND(self, a, b, l):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
         lambda_c1 = self.nextp_randomness(l)
         g1 = self.nextp_randomness(l)
         lambda_c2 = self.prevp_randomness(l)
@@ -354,8 +352,6 @@ class Server0(Server):
         return lambda_c1 ^ lambda_c2
     
     def multibit_optimised_offline_AND1(self, a, b, l):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
 
         lambda_c1 = self.nextp_randomness(l)
         g1 = self.nextp_randomness(l)
@@ -523,7 +519,7 @@ class Server1(Server):
     
     def nextp_randomnessF(self, P: int, len: int) -> bitarray:
         random.seed(ba2int(self.__initRandom12))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandom12 = x
         temp = ba2int(x[0:len])
         p = 2**P-1
@@ -533,7 +529,7 @@ class Server1(Server):
 
     def prevp_randomnessF(self, P: int, len: int) -> bitarray:
         random.seed(ba2int(self.__initRandom10))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandom10 = x
         temp = ba2int(x[0:len])
         p = 2**P-1
@@ -543,7 +539,7 @@ class Server1(Server):
 
     def common_randomnessF(self, P: int, len: int) -> bitarray:
         random.seed(ba2int(self.__initRandomCommon))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandomCommon = x
         temp = ba2int(x[0:len])
         p = 2**P-1
@@ -600,19 +596,19 @@ class Server1(Server):
 
     def nextp_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandom12))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandom12 = x
         return x[0:len]
 
     def prevp_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandom10))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandom10 = x
         return x[0:len]
 
     def common_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandomCommon))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandomCommon = x
         return x[0:len]
     
@@ -672,9 +668,7 @@ class Server1(Server):
         
         return [lambda_c1]
 
-    def mulitbit_optimised_offline_AND(self, a, b, l):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
+    def multibit_optimised_offline_AND(self, a, b, l):
         self.__L[0].append(a)
         self.__L[1].append(b)
 
@@ -685,9 +679,7 @@ class Server1(Server):
         self.__L[3].append(g1)
         return lambda_c1
 
-    def mulitbit_optimised_offline_AND1(self, a, b, l):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
+    def multibit_optimised_offline_AND1(self, a, b, l):
         self.__L[0].append(a)
         self.__L[1].append(b)
 
@@ -755,6 +747,26 @@ class Server1(Server):
     def optimised_online_AND1(self, a, b):
         a = bitarray(str(a))
         b = bitarray(str(b))
+        temp1 = self.__L[1].pop(0)
+        temp2 = self.__L[0].pop(0)
+        temp3 = self.__L[2].pop(0)
+        temp4 = self.__L[3].pop(0)
+
+        m1 = (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
+
+        return [m1]
+    
+    def multibit_optimised_online_AND(self, a, b):
+        temp1 = self.__L[1].pop(0)
+        temp2 = self.__L[0].pop(0)
+        temp3 = self.__L[2].pop(0)
+        temp4 = self.__L[3].pop(0)
+
+        m1 = (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
+
+        return m1
+    
+    def multibit_optimised_online_AND1(self, a, b):
         temp1 = self.__L[1].pop(0)
         temp2 = self.__L[0].pop(0)
         temp3 = self.__L[2].pop(0)
@@ -946,7 +958,7 @@ class Server2(Server):
     
     def nextp_randomnessF(self, P: int, len: int) -> bitarray:
         random.seed(ba2int(self.__initRandom20))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandom20 = x
         temp = ba2int(x[0:len])
         p = 2**P-1
@@ -956,7 +968,7 @@ class Server2(Server):
 
     def prevp_randomnessF(self, P: int, len: int) -> bitarray:
         random.seed(ba2int(self.__initRandom21))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandom21 = x
         temp = ba2int(x[0:len])
         p = 2**P-1
@@ -966,7 +978,7 @@ class Server2(Server):
 
     def common_randomnessF(self, P: int, len: int) -> bitarray:
         random.seed(ba2int(self.__initRandomCommon))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandomCommon = x
         temp = ba2int(x[0:len])
         p = 2**P-1
@@ -1028,19 +1040,19 @@ class Server2(Server):
 
     def nextp_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandom20))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandom20 = x
         return x[0:len]
 
     def prevp_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandom21))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandom21 = x
         return x[0:len]
 
     def common_randomness(self, len) -> bitarray:
         random.seed(ba2int(self.__initRandomCommon))
-        x = bitarray(bin(random.getrandbits(128))[2:].zfill(128))
+        x = bitarray(bin(random.getrandbits(len))[2:].zfill(len))
         self.__initRandomCommon = x
         return x[0:len]
 
@@ -1103,8 +1115,6 @@ class Server2(Server):
         return [lambda_c2]
     
     def multibit_optimised_offline_AND(self, a, b, l):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
         self.__L[0].append(a)
         self.__L[1].append(b)
 
@@ -1114,8 +1124,6 @@ class Server2(Server):
         return lambda_c2
 
     def multibit_optimised_offline_AND1(self, a, b, l):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
         self.__L[0].append(a)
         self.__L[1].append(b)
 
@@ -1186,6 +1194,26 @@ class Server2(Server):
     def optimised_online_AND1(self, a, b):
         a = bitarray(str(a))
         b = bitarray(str(b))
+        temp1 = self.__L[1].pop(0)
+        temp2 = self.__L[0].pop(0)
+        temp3 = self.__L[2].pop(0)
+        temp4 = self.__L[3].pop(0)
+
+        m2 = (a & b) ^ (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
+
+        return [m2]
+    
+    def multibit_optimised_online_AND(self, a, b):
+        temp1 = self.__L[1].pop(0)
+        temp2 = self.__L[0].pop(0)
+        temp3 = self.__L[2].pop(0)
+        temp4 = self.__L[3].pop(0)
+
+        m2 = (a & b) ^ (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
+
+        return m2
+    
+    def multibit_optimised_online_AND1(self, a, b):
         temp1 = self.__L[1].pop(0)
         temp2 = self.__L[0].pop(0)
         temp3 = self.__L[2].pop(0)

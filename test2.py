@@ -3,22 +3,6 @@ from aes import *
 from fpv import * 
 import os
 
-class encryptedFingerprintOutput:
-    def __init__(self) -> None:
-        self.__list = multiprocessing.Queue()
-
-    def addShare(self, a: Share) -> None:
-        self.__list.put(a)
-
-    def getShares(self) -> list[Share]:
-        temp = []
-        while self.__list.empty() != True:
-            i = self.__list.get()
-            temp.append(i)
-        for i in temp:
-            self.__list.put(i)
-        return temp
-
 def getSharesfromFile(file) -> tuple[list[Share], list[Share], FPVShare]:
         line = file.readline()
         L = int(line)

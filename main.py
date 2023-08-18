@@ -3,24 +3,12 @@ from aes import *
 from shuffle import *
 from fpv import *
 from winnowing import *
-
-class encryptedFingerprintOutput:
-    def __init__(self) -> None:
-        self.__list = multiprocessing.Queue()
-
-    def addShare(self, a: Share) -> None:
-        self.__list.put(a)
-
-    def getShares(self) -> list[Share]:
-        temp = []
-        while self.__list.empty() != True:
-            i = self.__list.get()
-            temp.append(i)
-        for i in temp:
-            self.__list.put(i)
-        return temp
+from time import *
 
 class SecureCosineSimilarity:
+    def __init__(self):
+        self.globaltime = time()
+    
     def findCommonIndices(self, A: list[bitarray], B: list[bitarray]) -> list[tuple[int, int]]:
         L = len(A)
         M = len(B)
@@ -35,8 +23,6 @@ class SecureCosineSimilarity:
         line = file.readline()
         L = int(line)
         f = []
-        # line = file.readline()
-        # line = file.readline()
         for _ in range(L):
         # while line:
             line = file.readline()
@@ -78,14 +64,13 @@ class SecureCosineSimilarity:
                 lambda2.append(l2)
                 outputs.append(s0)
             kl1, kl2 = k.get()
-            offline_output = aes.circuit_offline([kl1.copy() , kl2.copy()], [lambda1.copy() , lambda2.copy()], S, outputs)
-            print("0, AESdone offline")
+            sttime = time()
+            aes.circuit_offline([kl1.copy() , kl2.copy()], [lambda1.copy() , lambda2.copy()], S, outputs)
             S.complete_optimised_offline()
-            # Online begins
-            # for i in range(len(outputs)):
-            #     s = outputs[i].get()
-            #     x = S.online_reconstruction(s[0], s[1])
-            #     print(ba2hex(x))
+            etime = time()
+            print("Offline aes starts -          ", sttime - self.globaltime)
+            print("Offline aes ends -            ", etime - self.globaltime)
+            print("offline aes                   ", - sttime + etime)
             return outputs
 
         if S.id() == 1:
@@ -100,14 +85,18 @@ class SecureCosineSimilarity:
                 lambda1.append(l1)
                 m1.append(m)
                 outputs.append(s1)
-
-            offline_output = aes.circuit_offline([kl1.copy() , km.copy()], [lambda1.copy() , m1.copy()], S, outputs)
-            print("1, AESdone offline")
-            online_output = aes.circuit_online([kl1.copy() , km.copy()], [lambda1.copy(), m1.copy()], S, outputs)
-            print("1, AESdone online")
-            # for i in range(len(outputs)):
-            #     s = outputs[i].get()
-            #     x = S.online_reconstruction(s[0], s[1])
+            sttime = time()
+            aes.circuit_offline([kl1.copy() , km.copy()], [lambda1.copy() , m1.copy()], S, outputs)
+            etime = time()
+            print("Offline aes starts -          ", " "*30, sttime - self.globaltime)
+            print("Offline aes ends -            ", " "*30, etime - self.globaltime)
+            print("offline aes                   ", " "*30, - sttime + etime)
+            sttime = time()
+            aes.circuit_online([kl1.copy() , km.copy()], [lambda1.copy(), m1.copy()], S, outputs)
+            etime = time()
+            print("Online aes starts -           ", " "*30, sttime - self.globaltime)
+            print("Online aes ends -             ", " "*30, etime - self.globaltime)
+            print("online aes                    ", " "*30, - sttime + etime)
             return outputs
 
         if S.id() == 2:
@@ -122,26 +111,32 @@ class SecureCosineSimilarity:
                 m2.append(m)
                 outputs.append(s2)
             kl2, km = k.get()
-
-            offline_output = aes.circuit_offline([kl2.copy() , km.copy()], [lambda2.copy() , m2.copy()], S, outputs)
-            print("2, AESdone offline")
+            sttime = time()
+            aes.circuit_offline([kl2.copy() , km.copy()], [lambda2.copy() , m2.copy()], S, outputs)
             S.complete_optimised_offline()
-
-            # Online begins
-
-            online_output = aes.circuit_online([kl2.copy() , km.copy()], [lambda2.copy() , m2.copy()], S, outputs)
-            print("2, AESdone online")
-            # for i in range(len(outputs)):
-            #     s = outputs[i].get()
-            #     x = S.online_reconstruction(s[0], s[1])
+            etime = time()
+            print("Offline aes starts -          ", " "*30, " "*30, sttime - self.globaltime)
+            print("Offline aes ends -            ", " "*30, " "*30, etime - self.globaltime)
+            print("offline aes                   ", " "*30, " "*30, - sttime + etime)
+            sttime = time()
+            aes.circuit_online([kl2.copy() , km.copy()], [lambda2.copy() , m2.copy()], S, outputs)
+            etime = time()
+            print("Online aes starts -           ", " "*30, " "*30, sttime - self.globaltime)
+            print("Online aes ends -             ", " "*30, " "*30, etime - self.globaltime)
+            print("online aes                    ", " "*30, " "*30, - sttime + etime)
             return outputs
 
     def reconstructList(self, f: list[Share], S: Server):
+        sttime = time()
         output = []
         for i in f:
             x = i.get()
             y = S.online_reconstruction(x[0], x[1])
             output.append(y)
+        etime = time()
+        print("List Reconstruction starts -  ", " "*30*S.id(), sttime - self.globaltime)
+        print("List Reconstruction ends -    ", " "*30*S.id(), etime - self.globaltime)
+        print("List Reconstruction           ", " "*30*S.id(), etime - sttime)
         return output
 
     def reconstructListF(self, f: list[Share], S: Server):
@@ -189,8 +184,6 @@ class SecureCosineSimilarity:
                 vi = S.offline_ANDF(P, S.addF(P, v1i[0], v1i[1]), S.addF(P, v2i[0], v2i[1]))
                 s0 = S.addF(P, s0, vi[1])
                 s1 = S.addF(P, s1, vi[2])
-            p = S.online_reconstructionF(P, s0, s1)
-            print(ba2int(p))
         else:
             for i in range(len(commonindices)):
                 v1i = v1[commonindices[i][0]].get()
@@ -203,7 +196,6 @@ class SecureCosineSimilarity:
                 v2i = v2[commonindices[i][1]].get()
                 vi = S.online_ANDF(P, v1i[1], v2i[1])
                 s1 = S.addF(P, s1, vi)
-            p = S.online_reconstructionF(P, s0, s1)
         Output = Share()
         Output.add(s0)
         Output.add(s1)
@@ -227,15 +219,28 @@ class SecureCosineSimilarity:
             key.add(lambda1_key)
             key.add(lambda2_key)
 
-            print(ba2hex(S.online_reconstruction(lambda1_key, lambda2_key)))
-
             # Running AES on the fingerprints
+            print(S.id(), "Client 1 AES")
             encF1 = self.runAESonList(fingerprint1, key, S, aes)
+            print(S.id(), "Client 2 AES")
             encF2 = self.runAESonList(fingerprint2, key, S, aes)
 
             # Shuffling Values and Encrypted Fingerprints
-            temp1 = shuffle.shuffle(61, encF1, values1, S)
-            temp2 = shuffle.shuffle(61, encF2, values2, S)
+            sttime = time()
+            temp1 = shuffle.shuffle_offline(61, encF1, values1, S)
+            temp2 = shuffle.shuffle_offline(61, encF2, values2, S)
+            shuffle.optimize_shuffle_offline(S)
+            etime = time()
+            print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
+            print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
+            print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
+            sttime = time()
+            temp1 = shuffle.shuffle_online(61, encF1, values1, S)
+            temp2 = shuffle.shuffle_online(61, encF2, values2, S)
+            etime = time()
+            print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
+            print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
+            print("online shuffling              ", " "*30*S.id(), - sttime + etime)
             encshufF1 = temp1[0]
             shufV1 = temp1[1]
             encshufF2 = temp2[0]
@@ -247,21 +252,19 @@ class SecureCosineSimilarity:
 
             # Finding the indices of the common fingerprints
             commonindices = self.findCommonIndices(Z1, Z2)
+
+            sttime = time()
             
             # Getting the numerator of CS using the common fingerprints
             Num = self.getNumerator(61, shufV1, shufV2, commonindices, S)
-            p = S.online_reconstructionF(61, Num.get()[0], Num.get()[1])
-            print("num", p)
             floatnum = fpv.int2FPV(Num, S)
-            p = fpv.FPVonline_reconstruction2Float(floatnum, S)
-            print("num", p)
-            p = fpv.FPVonline_reconstruction2Float(Linv1, S)
-            print("in1", p)
-            p = fpv.FPVonline_reconstruction2Float(Linv2, S)
-            print("in2", p)
             tempcs = fpv.FPVMultiply(floatnum, Linv1, S)
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
+            etime = time()
+            print("fpv mpc starts -              ", sttime - self.globaltime)
+            print("fpv mpc ends -                ", etime - self.globaltime)
+            print("fpv mpc                       ", - sttime + etime)
             return csout
 
         if S.id() == 1:
@@ -280,16 +283,29 @@ class SecureCosineSimilarity:
             key = Share()
             key.add(lambda1_key)
             key.add(m_key)
-
-            print(ba2hex(S.online_reconstruction(lambda1_key, m_key)))
             
             # Running AES on the fingerprints
+            print(S.id(), "Client 1 AES")
             encF1 = self.runAESonList(fingerprint1, key, S, aes)
+            print(S.id(), "Client 2 AES")
             encF2 = self.runAESonList(fingerprint2, key, S, aes)
 
             # Shuffling Values and Encrypted Fingerprints
-            temp1 = shuffle.shuffle(61, encF1, values1, S)
-            temp2 = shuffle.shuffle(61, encF2, values2, S)
+            sttime = time()
+            temp1 = shuffle.shuffle_offline(61, encF1, values1, S)
+            temp2 = shuffle.shuffle_offline(61, encF2, values2, S)
+            shuffle.optimize_shuffle_offline(S)
+            etime = time()
+            print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
+            print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
+            print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
+            sttime = time()
+            temp1 = shuffle.shuffle_online(61, encF1, values1, S)
+            temp2 = shuffle.shuffle_online(61, encF2, values2, S)
+            etime = time()
+            print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
+            print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
+            print("online shuffling              ", " "*30*S.id(), - sttime + etime)
             encshufF1 = temp1[0]
             shufV1 = temp1[1]
             encshufF2 = temp2[0]
@@ -302,17 +318,18 @@ class SecureCosineSimilarity:
             # Finding the indices of the common fingerprints
             commonindices = self.findCommonIndices(Z1, Z2)
             
+            sttime = time()
+
             # Getting the numerator of CS using the common fingerprints
             Num = self.getNumerator(61, shufV1, shufV2, commonindices, S)
-            p = S.online_reconstructionF(61, Num.get()[0], Num.get()[1])
-
             floatnum = fpv.int2FPV(Num, S)
-            p = fpv.FPVonline_reconstruction2Float(floatnum, S)
-            p = fpv.FPVonline_reconstruction2Float(Linv1, S)
-            p = fpv.FPVonline_reconstruction2Float(Linv2, S)
             tempcs = fpv.FPVMultiply(floatnum, Linv1, S)
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
+            etime = time()
+            print("fpv mpc starts -               ", " "*30, sttime - self.globaltime)
+            print("fpv mpc ends -                 ", " "*30, etime - self.globaltime)
+            print("fpv mpc                        ", " "*30, - sttime + etime)
             return csout
 
         if S.id() == 2:
@@ -331,15 +348,28 @@ class SecureCosineSimilarity:
             key.add(lambda2_key)
             key.add(m_key)
 
-            print(ba2hex(S.online_reconstruction(lambda2_key, m_key)))
-
             # Running AES on the fingerprints
+            print(S.id(), "Client 1 AES")
             encF1 = self.runAESonList(fingerprint1, key, S, aes)
+            print(S.id(), "Client 2 AES")
             encF2 = self.runAESonList(fingerprint2, key, S, aes)
 
             # Shuffling Values and Encrypted Fingerprints
-            temp1 = shuffle.shuffle(61, encF1, values1, S)
-            temp2 = shuffle.shuffle(61, encF2, values2, S)
+            sttime = time()
+            shuffle.shuffle_offline(61, encF1, values1, S)
+            shuffle.shuffle_offline(61, encF2, values2, S)
+            shuffle.optimize_shuffle_offline(S)
+            etime = time()
+            print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
+            print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
+            print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
+            sttime = time()
+            temp1 = shuffle.shuffle_online(61, encF1, values1, S)
+            temp2 = shuffle.shuffle_online(61, encF2, values2, S)
+            etime = time()
+            print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
+            print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
+            print("online shuffling              ", " "*30*S.id(), - sttime + etime)
             encshufF1 = temp1[0]
             shufV1 = temp1[1]
             encshufF2 = temp2[0]
@@ -352,17 +382,18 @@ class SecureCosineSimilarity:
             # Finding the indices of the common fingerprints
             commonindices = self.findCommonIndices(Z1, Z2)
 
+            sttime = time()
+
             # Getting the numerator of CS using the common fingerprints
             Num = self.getNumerator(61, shufV1, shufV2, commonindices, S)
-            p = S.online_reconstructionF(61, Num.get()[0], Num.get()[1])
             floatnum = fpv.int2FPV(Num, S)
-            p = fpv.FPVonline_reconstruction2Float(floatnum, S)
-            p = fpv.FPVonline_reconstruction2Float(Linv1, S)
-            p = fpv.FPVonline_reconstruction2Float(Linv2, S)
             tempcs = fpv.FPVMultiply(floatnum, Linv1, S)
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
-
+            etime = time()
+            print("fpv mpc starts -               ", " "*30, " "*30, sttime - self.globaltime)
+            print("fpv mpc ends -                 ", " "*30, " "*30, etime - self.globaltime)
+            print("fpv mpc                        ", " "*30, " "*30, - sttime + etime)
             return csout
 
     def Preprocess(self, program1, filename1, program2, filename2):
@@ -374,6 +405,8 @@ class SecureCosineSimilarity:
         win.GentoFile(os.path.join("Program1", "program1"), os.path.join("Program2", "program2"))
     
     def Run(self, S: Server0 | Server1 | Server2):
+        sttime = time()
+        print("Sharing starts -              ", " "*30*S.id(), time() - self.globaltime)
         c1string = os.path.join("Client1", "Client1_Server") + str(S.id()) + "_v2.dat"
         c2string = os.path.join("Client2", "Client2_Server") + str(S.id()) + "_v2.dat"
         file0 = open(c1string, "r")
@@ -383,13 +416,19 @@ class SecureCosineSimilarity:
         f2, v2, IL2 = self.getSharesfromFile(file0)
         file0.close()
 
-        print("Sharing done")
+        etime = time()
+        print("Sharing ends -                ", " "*30*S.id(), time() - self.globaltime)
+        print("Sharing                       ", " "*30*S.id(), etime - sttime)
 
         out = self.SecureCS(f1, f2, v1, v2, IL1, IL2, S)
         if S.id() == 0:
+            sttime = time()
             with open("Output.dat", "w") as file:
                 print(out)
                 file.write(str(out))
+            etime = time()
+            print("output writing", - sttime + etime)
+            
         return
 
 if __name__=='__main__':
@@ -424,12 +463,14 @@ if __name__=='__main__':
     program_number1 = sys.argv[1]
     filename2 = sys.argv[4]
     program_number2 = sys.argv[3]
-
+    print("AST Generation starts - ", time() - scs.globaltime)
     scs.Preprocess(program_number1, filename1, program_number2, filename2)
-    print("Preprocess done")
+    print("AST Generation ends - ", time() - scs.globaltime)
     p0 = multiprocessing.Process(target=scs.Run, args=[S0])
     p1 = multiprocessing.Process(target=scs.Run, args=[S1])
     p2 = multiprocessing.Process(target=scs.Run, args=[S2])
+
+    start_time = time()
 
     p0.start()
     p1.start()
@@ -438,3 +479,7 @@ if __name__=='__main__':
     p0.join()
     p1.join()
     p2.join()
+
+    end_time = time()
+
+    print(-start_time + end_time)

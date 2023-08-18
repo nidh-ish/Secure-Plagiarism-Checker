@@ -26,94 +26,6 @@ class FPVShare:
     def getl(self):
         return self.l
 
-
-
-avs0 = Share()
-avs0.add(bitarray("0"))
-avs0.add(bitarray("0"))
-aps0 = Share()
-aps0.add(bitarray("0"))
-aps0.add(bitarray("0"))
-azs0 = Share()
-azs0.add(bitarray("0"))
-azs0.add(bitarray("0"))
-ass0 = Share()
-ass0.add(bitarray("0"))
-ass0.add(bitarray("0"))
-bvs0 = Share()
-bvs0.add(bitarray("0"))
-bvs0.add(bitarray("0"))
-bps0 = Share()
-bps0.add(bitarray("0"))
-bps0.add(bitarray("0"))
-bzs0 = Share()
-bzs0.add(bitarray("0"))
-bzs0.add(bitarray("0"))
-bss0 = Share()
-bss0.add(bitarray("0"))
-bss0.add(bitarray("0"))
-
-avs1 = Share()
-avs1.add(bitarray("0"))
-avs1.add(bitarray("101000000000000000000000"))
-aps1 = Share()
-aps1.add(bitarray("0"))
-aps1.add(bitarray("10000000"))
-azs1 = Share()
-azs1.add(bitarray("0"))
-azs1.add(bitarray("0"))
-ass1 = Share()
-ass1.add(bitarray("0"))
-ass1.add(bitarray("0"))
-bvs1 = Share()
-bvs1.add(bitarray("0"))
-bvs1.add(bitarray("111000000000000000000000"))
-bps1 = Share()
-bps1.add(bitarray("0"))
-bps1.add(bitarray("10000000"))
-bzs1 = Share()
-bzs1.add(bitarray("0"))
-bzs1.add(bitarray("0"))
-bss1 = Share()
-bss1.add(bitarray("0"))
-bss1.add(bitarray("0"))
-
-avs2 = Share()
-avs2.add(bitarray("0"))
-avs2.add(bitarray("101000000000000000000000"))
-aps2 = Share()
-aps2.add(bitarray("0"))
-aps2.add(bitarray("10000000"))
-azs2 = Share()
-azs2.add(bitarray("0"))
-azs2.add(bitarray("0"))
-ass2 = Share()
-ass2.add(bitarray("0"))
-ass2.add(bitarray("0"))
-bvs2 = Share()
-bvs2.add(bitarray("0"))
-bvs2.add(bitarray("111000000000000000000000"))
-bps2 = Share()
-bps2.add(bitarray("0"))
-bps2.add(bitarray("10000000"))
-bzs2 = Share()
-bzs2.add(bitarray("0"))
-bzs2.add(bitarray("0"))
-bss2 = Share()
-bss2.add(bitarray("0"))
-bss2.add(bitarray("0"))
-
-a0 = FPVShare(avs0, aps0, azs0, ass0)
-a1 = FPVShare(avs1, aps1, azs1, ass1)
-a2 = FPVShare(avs2, aps2, azs2, ass2)
-
-b0 = FPVShare(bvs0, bps0, bzs0, bss0)
-b1 = FPVShare(bvs1, bps1, bzs1, bss1)
-b2 = FPVShare(bvs2, bps2, bzs2, bss2)
-
-
-
-
 # All the elements on which operations take place are from F_{2**P-1}, which implies P-bit bitarrays
 class FPVArithmetic:
     def __init__(self):
@@ -233,7 +145,6 @@ class FPVArithmetic:
     # Offline XOR of bits A and B
     def XOR_offline(self, A: list[bitarray], B: list[bitarray], S: Server0 | Server1 | Server2):
         if S.id() == 0:
-            # temp21 = S.offline_AND1(ba2int(A[0] ^ A[1]), ba2int(B[0] ^ B[1]))
             a0 = ba2int(A[0])
             a1 = ba2int(A[1])
             b0 = ba2int(B[0])
@@ -291,16 +202,6 @@ class FPVArithmetic:
         temp0 = S.addF(self.P, A, B)
         temp2 = S.multiplyF(self.P, int2ba(2), S.multiplyF(self.P, A, B))
         return S.subtractF(self.P, temp2, temp0)
-
-    def RandBitFD(self, S: Server0 | Server1 | Server2):
-        if S.id() == 0:
-            temp0 ,temp1 = S.offline_generateRandomShare(1)
-
-        elif S.id() == 1:
-            temp_off = S.offline_generateRandomShare(1)
-
-        else:
-            temp_off = S.offline_generateRandomShare(1)
 
     # Offline OR of A and B
     def OR_offline(self, A: list[bitarray], B: list[bitarray], S: Server0 | Server1 | Server2):
@@ -1226,7 +1127,6 @@ class FPVArithmetic:
         p = S.online_reconstructionF(61, p1[0], p1[1])
         z = S.online_reconstructionF(61, z1[0], z1[1])
         s = S.online_reconstructionF(61, s1[0], s1[1])
-        # p = S.addF(self.P, int2ba(127), p)
 
         v = ba2base(2, v[self.P - 23 : self.P])
         p = ba2base(2, p[self.P - 8 : self.P])
@@ -1388,9 +1288,6 @@ def TestFunctions(A: list[bitarray], B: list[bitarray], C :list[bitarray], S: Se
         x.add(xl1)
         x.add(xl2)
         sharex = fpv.int2FPV(x, S)
-        # x = 0.57
-        # offlinedata = fpv.FPVoffline_shareFloat(0, S)
-        # sharex = fpv.FPVonline_shareFloat(0, offlinedata, x, S)
         offlinedata = fpv.FPVoffline_shareFloat(1, S)
         sharey = fpv.FPVonline_shareFloat(1, offlinedata, None, S)
         offlinedata = fpv.FPVoffline_shareFloat(2, S)
@@ -1401,8 +1298,6 @@ def TestFunctions(A: list[bitarray], B: list[bitarray], C :list[bitarray], S: Se
         output = fpv.FPVMultiply(outoff, sharez, S)
         v = fpv.FPVonline_reconstruction2Float(output, S)
         print(v)
-        # f = fpv.FPVonline_reconstruction2Float(out, S)
-        # print(f)
 
     elif S.id() == 1:
         xl1= S.offline_shareF(61, 0)
@@ -1412,8 +1307,6 @@ def TestFunctions(A: list[bitarray], B: list[bitarray], C :list[bitarray], S: Se
         x.add(xl1)
         x.add(xm)
         sharex = fpv.int2FPV(x, S)
-        # offlinedata = fpv.FPVoffline_shareFloat(0, S)
-        # sharex = fpv.FPVonline_shareFloat(0, offlinedata, None, S)
         y = 0.2672612419124244
         offlinedata = fpv.FPVoffline_shareFloat(1, S)
         sharey = fpv.FPVonline_shareFloat(1, offlinedata, y, S)
@@ -1423,7 +1316,6 @@ def TestFunctions(A: list[bitarray], B: list[bitarray], C :list[bitarray], S: Se
         v = fpv.FPVonline_reconstruction2Float(outoff, S)
         output = fpv.FPVMultiply(outoff, sharez, S)
         v = fpv.FPVonline_reconstruction2Float(output, S)
-        # f = fpv.FPVonline_reconstruction2Float(out, S)
 
     else:
         xl2 = S.offline_shareF(61, 0)
@@ -1433,8 +1325,6 @@ def TestFunctions(A: list[bitarray], B: list[bitarray], C :list[bitarray], S: Se
         x.add(xl2)
         x.add(xm)
         sharex = fpv.int2FPV(x, S)
-        # offlinedata = fpv.FPVoffline_shareFloat(0, S) 
-        # sharex = fpv.FPVonline_shareFloat(0, offlinedata, None, S)
         offlinedata = fpv.FPVoffline_shareFloat(1, S)
         sharey = fpv.FPVonline_shareFloat(1, offlinedata, None, S)
         z = 0.14907119849998599
@@ -1444,7 +1334,6 @@ def TestFunctions(A: list[bitarray], B: list[bitarray], C :list[bitarray], S: Se
         v = fpv.FPVonline_reconstruction2Float(outoff, S)
         output = fpv.FPVMultiply(outoff, sharez, S)
         v = fpv.FPVonline_reconstruction2Float(output, S)
-        # f = fpv.FPVonline_reconstruction2Float(out, S)
 
 if __name__ == "__main__":
     
@@ -1490,12 +1379,6 @@ if __name__ == "__main__":
     x2 = bitarray(bin(random.getrandbits(61))[2:].zfill(61))
     x = bitarray("0")
     mx = int2ba((ba2int(x) + ba2int(x1) + ba2int(x2))%(2**61-1), length=61)
-    # mx = x ^ x1 ^ x2   
-    # 2.5 = 0 10000000 01000000000000000000000
-    # 3.5 = 0 10000000 11000000000000000000000
-    
-
-
 
     manager = multiprocessing.Manager()
     d = manager.dict()
@@ -1515,4 +1398,3 @@ if __name__ == "__main__":
     p0.join()
     p1.join()
     p2.join()
-

@@ -68,9 +68,6 @@ class Winnowing:
         vec1 = Counter(l1)
         vec2 = Counter(l2)
         
-        # print(len(vec1))
-        # print(len(vec2))  
-        
         v1key = []
         v1val = []
         for k in vec1.keys():
@@ -87,29 +84,8 @@ class Winnowing:
         print(v2key)
         print(v2val)
 
-        # s = 0
-        # for i in v1key:
-        #     if i in v2key:
-        #         i1 = v1key.index(i)
-        #         i2 = v2key.index(i)
-        #         s += v1val[i1]*v2val[i2]
-        # print("numcal", s)
-        # d1 = [i**2 for i in v1val]
-        # d2 = [i**2 for i in v2val]
-        # print("sumcal", sum(d1), sum(d2))
-        # d1 = math.sqrt(sum(d1))
-        # d2 = math.sqrt(sum(d2))
-        # print("denominatorcal", d1*d2)
-        # print(s/(d1*d2))
-
         intersection = set(vec1.keys()) & set(vec2.keys())
         
-        # print(intersection)
-        
-        # for x in intersection:
-        #     if(vec1[x] > 10):
-        #         print(vec1[x].key())
-        #         print(vec2[x].key())
         
         numerator = sum([vec1[x] * vec2[x] for x in intersection])
         print("numac", numerator)
@@ -148,9 +124,7 @@ class Winnowing:
         
         document_fingerprints = []
         
-        # print(kgrams)
         hash_table = [ (hash(kgrams[i]) , i)  for i in range(len(kgrams)) ]
-        # print(len(hash_table))
         
         window_length = t - k + 1
         window_begin = 0
@@ -163,7 +137,6 @@ class Winnowing:
             window_minimum = modified_min_func(window)
             
             if(minimum_hash != window_minimum):
-                # print(window_minimum)
                 document_fingerprints.append(window_minimum[0]) #not taking positions into consideration
                 minimum_hash = window_minimum
 
@@ -177,7 +150,6 @@ class Winnowing:
             token = nltk.word_tokenize(text)
             kgrams = ngrams(token, k)
             lst_kgrams = list(kgrams)
-            # print("Kgrams : ", lst_kgrams)
             return lst_kgrams
 
     # only conversion to lowercase for now
@@ -216,16 +188,11 @@ class Winnowing:
         for k in vec1.keys():
             v1key.append(int2ba(2**126 + k, length=128))
             v1val.append(vec1[k])
-        # print(v1key)
-        # print(v1val)
-        
         v2key = []
         v2val = []
         for k in vec2.keys():
             v2key.append(int2ba(2**126 + k, length=128))
             v2val.append(vec2[k])
-        # print(v2key)
-        # print(v2val)
         f0 = open(os.path.join("Client1", "Client1_Server0_v2.dat"), "w+")
         f1 = open(os.path.join("Client1", "Client1_Server1_v2.dat"), "w+")
         f2 = open(os.path.join("Client1", "Client1_Server2_v2.dat"), "w+")
@@ -258,9 +225,6 @@ class Winnowing:
             vec1 = Counter(fingerprints1_0)
             vec2 = Counter(fingerprints2_0)
             
-            # print(len(vec1))
-            # print(len(vec2))  
-            
             fingerprints1_1 = self.generate_fingerprints((program1+"_lev1.txt"), 13, 17)
             fingerprints2_1 = self.generate_fingerprints((program2+"_lev1.txt"), 13, 17)
             cosine_similarity_lev1 = self.cosine_similarity(fingerprints1_1, fingerprints2_1)
@@ -270,30 +234,11 @@ class Winnowing:
             fingerprints2_2 = self.generate_fingerprints((program2+"_lev2.txt"), 13, 17)
             cosine_similarity_lev2 = self.cosine_similarity(fingerprints1_2, fingerprints2_2)
             lev2s.append(cosine_similarity_lev2)
-        # print(len(fingerprints1_0))
-        # print(len(fingerprints2_0))
-
-        # print(len(fingerprints1_1))
-        # print(len(fingerprints2_1))
-
-        # print(len(fingerprints1_2))
-        # print(len(fingerprints2_2))
 
         final_cosine_similarity_lev0 = round(mean(lev0s), 2)
         final_cosine_similarity_lev1 = round(mean(lev1s), 2)
         final_cosine_similarity_lev2 = round(mean(lev2s), 2)
         print(lev0s[0])
-        # f10,f20 = buildVector(fingerprints1_0, fingerprints2_0)
-        # f11,f21 = buildVector(fingerprints1_1, fingerprints2_1)
-        # f12,f22 = buildVector(fingerprints1_2, fingerprints2_2)
-
-        # print("Cosine similarity Level 0 : \n", cluster.util.cosine_distance(f10,f20))
-        # print("Cosine similarity Level 1 : \n", cluster.util.cosine_distance(f11,f21))
-        # print("Cosine similarity Level 2 : \n", cluster.util.cosine_distance(f12,f22))
-
-        # print("Cosine similarity Level 0 : \n", final_cosine_similarity_lev0)
-        # print("Cosine similarity Level 1 : \n", final_cosine_similarity_lev1)
-        # print("Cosine similarity Level 2 : \n", final_cosine_similarity_lev2)
 
         a_file = open(program1+"_count.txt")
         b_file = open(program2+"_count.txt")
@@ -322,14 +267,10 @@ class Winnowing:
             normalization_score=normalization_score/(t*10)
             total_similarity_score_win = ((0.5*final_cosine_similarity_lev0) + (0.3*final_cosine_similarity_lev1) + (0.2*final_cosine_similarity_lev2))
             normalization_score = normalization_score
-            # print("Winnowing similarity score : \n", total_similarity_score_win)
-            # print("Normalization score : \n", normalization_score)
             final_score = (total_similarity_score_win*60)+(normalization_score*40)
             print("Similarity score = : \n", final_score)
         else:
             total_similarity_score_win = ((0.5*final_cosine_similarity_lev0) + (0.3*final_cosine_similarity_lev1) + (0.2*final_cosine_similarity_lev2))
-            # print("Winnowing similarity score : \n", total_similarity_score_win)
-            # print("Invalid norm: \n", )
             final_score = (total_similarity_score_win*100)
             print("Similarity score = : \n", final_score)
 
@@ -345,28 +286,6 @@ class Winnowing:
             csvwriter.writerow(row)
         
         # Cosine similarity seems to be highest for k = 11 and t = 15, should try others.
-
-        # filename1 = "pycallgraph1"
-        # filename2 = "pycallgraph2"
-
-        # G1 = nx.MultiDiGraph(nx.drawing.nx_pydot.read_dot(filename1))
-        # G2 = nx.MultiDiGraph(nx.drawing.nx_pydot.read_dot(filename2))
-
-        # # networkx
-        # ged = nx.graph_edit_distance(G1,G2)
-        # print("Computing Graph Edit Distance ...")
-        # print("Graph Edit Distance from Networkx : ", ged)
-
-        # sub_ged = 0.2 * ged
-
-        # if(sub_ged >= 0.25):
-        #     sub_ged = 0.25
-
-        # if(sub_ged > 0):
-        #     print("Final Score: ", round((0.8*total_similarity_score) - (0.2*sub_ged), 2))
-        # else:
-        #     print("Final Score: ", round(total_similarity_score, 2))
-
 
 if __name__ == "__main__":
     filename1 = sys.argv[2]

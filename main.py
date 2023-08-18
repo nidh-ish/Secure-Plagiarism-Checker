@@ -5,22 +5,6 @@ from fpv import *
 from winnowing import *
 from time import *
 
-class encryptedFingerprintOutput:
-    def __init__(self) -> None:
-        self.__list = multiprocessing.Queue()
-
-    def addShare(self, a: Share) -> None:
-        self.__list.put(a)
-
-    def getShares(self) -> list[Share]:
-        temp = []
-        while self.__list.empty() != True:
-            i = self.__list.get()
-            temp.append(i)
-        for i in temp:
-            self.__list.put(i)
-        return temp
-
 class SecureCosineSimilarity:
     def __init__(self):
         self.globaltime = time()
@@ -39,8 +23,6 @@ class SecureCosineSimilarity:
         line = file.readline()
         L = int(line)
         f = []
-        # line = file.readline()
-        # line = file.readline()
         for _ in range(L):
         # while line:
             line = file.readline()
@@ -245,12 +227,20 @@ class SecureCosineSimilarity:
 
             # Shuffling Values and Encrypted Fingerprints
             sttime = time()
-            temp1 = shuffle.shuffle(61, encF1, values1, S)
-            temp2 = shuffle.shuffle(61, encF2, values2, S)
+            temp1 = shuffle.shuffle_offline(61, encF1, values1, S)
+            temp2 = shuffle.shuffle_offline(61, encF2, values2, S)
+            shuffle.optimize_shuffle_offline(S)
             etime = time()
-            print("shuffling starts -            ", " "*30*S.id(), sttime - self.globaltime)
-            print("shuffling ends -              ", " "*30*S.id(), etime - self.globaltime)
-            print("shuffling                     ", " "*30*S.id(), - sttime + etime)
+            print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
+            print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
+            print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
+            sttime = time()
+            temp1 = shuffle.shuffle_online(61, encF1, values1, S)
+            temp2 = shuffle.shuffle_online(61, encF2, values2, S)
+            etime = time()
+            print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
+            print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
+            print("online shuffling              ", " "*30*S.id(), - sttime + etime)
             encshufF1 = temp1[0]
             shufV1 = temp1[1]
             encshufF2 = temp2[0]
@@ -302,12 +292,20 @@ class SecureCosineSimilarity:
 
             # Shuffling Values and Encrypted Fingerprints
             sttime = time()
-            temp1 = shuffle.shuffle(61, encF1, values1, S)
-            temp2 = shuffle.shuffle(61, encF2, values2, S)
+            temp1 = shuffle.shuffle_offline(61, encF1, values1, S)
+            temp2 = shuffle.shuffle_offline(61, encF2, values2, S)
+            shuffle.optimize_shuffle_offline(S)
             etime = time()
-            print("shuffling starts -            ", " "*30*S.id(), sttime - self.globaltime)
-            print("shuffling ends -              ", " "*30*S.id(), etime - self.globaltime)
-            print("shuffling                     ", " "*30*S.id(), - sttime + etime)
+            print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
+            print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
+            print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
+            sttime = time()
+            temp1 = shuffle.shuffle_online(61, encF1, values1, S)
+            temp2 = shuffle.shuffle_online(61, encF2, values2, S)
+            etime = time()
+            print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
+            print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
+            print("online shuffling              ", " "*30*S.id(), - sttime + etime)
             encshufF1 = temp1[0]
             shufV1 = temp1[1]
             encshufF2 = temp2[0]
@@ -358,12 +356,20 @@ class SecureCosineSimilarity:
 
             # Shuffling Values and Encrypted Fingerprints
             sttime = time()
-            temp1 = shuffle.shuffle(61, encF1, values1, S)
-            temp2 = shuffle.shuffle(61, encF2, values2, S)
+            shuffle.shuffle_offline(61, encF1, values1, S)
+            shuffle.shuffle_offline(61, encF2, values2, S)
+            shuffle.optimize_shuffle_offline(S)
             etime = time()
-            print("shuffling starts -            ", " "*30*S.id(), sttime - self.globaltime)
-            print("shuffling ends -              ", " "*30*S.id(), etime - self.globaltime)
-            print("shuffling                     ", " "*30*S.id(), - sttime + etime)
+            print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
+            print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
+            print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
+            sttime = time()
+            temp1 = shuffle.shuffle_online(61, encF1, values1, S)
+            temp2 = shuffle.shuffle_online(61, encF2, values2, S)
+            etime = time()
+            print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
+            print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
+            print("online shuffling              ", " "*30*S.id(), - sttime + etime)
             encshufF1 = temp1[0]
             shufV1 = temp1[1]
             encshufF2 = temp2[0]

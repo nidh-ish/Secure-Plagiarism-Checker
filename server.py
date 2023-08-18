@@ -30,9 +30,6 @@ class Messenger:
             return x
         return None
 
-    def printQueuesStatus(self):
-        print(self.__Q01.qsize(), self.__Q10.qsize())
-
 class Server:
     def id(self):
         pass
@@ -46,10 +43,6 @@ class Server:
         pass
     def offline_AND1(self):
         pass
-    def optimised_offline_AND(self):
-        pass
-    def optimised_offline_AND1(self):
-        pass
     def complete_optimised_offline(self):
         pass
     def flush_optimization(self):
@@ -57,10 +50,6 @@ class Server:
     def online_AND(self):
         pass
     def online_AND1(self):
-        pass
-    def optimised_online_AND(self):
-        pass
-    def optimised_online_AND1(self):
         pass
     def complete_optimised_online(self):
         pass
@@ -71,8 +60,6 @@ class Server:
     def online_reconstruction(self):
         pass
     def OR(self):
-        pass
-    def printMessengers(self):
         pass
     def getnextmessenger(self) -> Messenger:
         pass
@@ -133,6 +120,7 @@ class Share:
 class Server0(Server):
     def __init__(self, initRandom01, initRandom02, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
         self.__L = [[], [], [], [], []]
+        self.__Sh = [[], []]
         self.__initRandom01 = initRandom01
         self.__initRandom02 = initRandom02
         self.__initRandomCommon = initRandomCommon
@@ -306,38 +294,7 @@ class Server0(Server):
         self.__L[3].append(g2)
 
         return lambda_c1, lambda_c2
-    
-    def optimised_offline_AND(self, a, b):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
-        lambda_c1 = self.nextp_randomness(1)
-        g1 = self.nextp_randomness(1)
-        lambda_c2 = self.prevp_randomness(1)
 
-        g2 = (a & b) ^ g1
-
-        # Send g2 to Server2
-        # self.messenger_prev.prevp_send(g2)
-        self.__L[3].append(g2)
-
-        return lambda_c1 ^ lambda_c2
-    
-    def optimised_offline_AND1(self, a, b):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
-
-        lambda_c1 = self.nextp_randomness(1)
-        g1 = self.nextp_randomness(1)
-        lambda_c2 = self.prevp_randomness(1)
-
-        g2 = (a & b) ^ g1
-
-        # Send g2 to Server2
-        # self.messenger_prev.prevp_send(g2)
-        self.__L[3].append(g2)
-
-        return lambda_c1, lambda_c2
-    
     def multibit_optimised_offline_AND(self, a, b, l):
         lambda_c1 = self.nextp_randomness(l)
         g1 = self.nextp_randomness(l)
@@ -346,7 +303,6 @@ class Server0(Server):
         g2 = (a & b) ^ g1
 
         # Send g2 to Server2
-        # self.messenger_prev.prevp_send(g2)
         self.__L[3].append(g2)
 
         return lambda_c1 ^ lambda_c2
@@ -360,7 +316,6 @@ class Server0(Server):
         g2 = (a & b) ^ g1
 
         # Send g2 to Server2
-        # self.messenger_prev.prevp_send(g2)
         self.__L[3].append(g2)
 
         return lambda_c1, lambda_c2
@@ -399,12 +354,6 @@ class Server0(Server):
             m = self.messenger_next.nextp_receive()
 
         return lambda1 ^ lambda2 ^ m
-
-    def printMessengers(self):
-        print("S0 to S1", end="")
-        self.messenger_next.printQueuesStatus()
-        print("S0 to S2", end="")
-        self.messenger_prev.printQueuesStatus()
 
     def getnextmessenger(self) -> Messenger:
         return self.messenger_next
@@ -448,9 +397,16 @@ class Server0(Server):
             self.messenger_next.nextp_send(m)
             self.messenger_prev.prevp_send(m)
 
+    def save_for_comm(self, arr: int, val: any):
+        self.__Sh[arr].append(val)
+
+    def get_saved(self, arr: int) -> any:
+        return self.__Sh[arr].pop(0)
+
 class Server1(Server):
     def __init__(self, initRandom10, initRandom12, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
         self.__L = [[], [], [], [], []]
+        self.__Sh = [[], []]
         self.__initRandom10 = initRandom10
         self.__initRandom12 = initRandom12
         self.__initRandomCommon = initRandomCommon
@@ -640,34 +596,6 @@ class Server1(Server):
         
         return [lambda_c1]
 
-    def optimised_offline_AND(self, a, b):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
-        self.__L[0].append(a)
-        self.__L[1].append(b)
-
-        lambda_c1 = self.prevp_randomness(1)
-        self.__L[2].append(lambda_c1)
-
-        g1 = self.prevp_randomness(1)
-        self.__L[3].append(g1)
-        return lambda_c1
-
-    def optimised_offline_AND1(self, a, b):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
-        self.__L[0].append(a)
-        self.__L[1].append(b)
-
-        lambda_c1 = self.prevp_randomness(1)
-        self.__L[2].append(lambda_c1)
-
-        g1 = self.prevp_randomness(1)
-        self.__L[3].append(g1)
-
-        
-        return [lambda_c1]
-
     def multibit_optimised_offline_AND(self, a, b, l):
         self.__L[0].append(a)
         self.__L[1].append(b)
@@ -731,30 +659,6 @@ class Server1(Server):
             m2 = self.messenger_next.nextp_receive()
 
         return [m1 ^ m2]
-    
-    def optimised_online_AND(self, a, b):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
-        temp1 = self.__L[1].pop(0)
-        temp2 = self.__L[0].pop(0)
-        temp3 = self.__L[2].pop(0)
-        temp4 = self.__L[3].pop(0)
-
-        m1 = (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
-
-        return m1
-    
-    def optimised_online_AND1(self, a, b):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
-        temp1 = self.__L[1].pop(0)
-        temp2 = self.__L[0].pop(0)
-        temp3 = self.__L[2].pop(0)
-        temp4 = self.__L[3].pop(0)
-
-        m1 = (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
-
-        return [m1]
     
     def multibit_optimised_online_AND(self, a, b):
         temp1 = self.__L[1].pop(0)
@@ -825,12 +729,6 @@ class Server1(Server):
 
         return lambda1 ^ lambda2 ^ m
 
-    def printMessengers(self):
-        print("S1 to S2", end="")
-        self.messenger_next.printQueuesStatus()
-        print("S1 to S0", end="")
-        self.messenger_prev.printQueuesStatus()
-
     def getnextmessenger(self) -> Messenger:
         return self.messenger_next
 
@@ -887,9 +785,16 @@ class Server1(Server):
                 m = self.messenger_next.nextp_receive()
             return m
 
+    def save_for_comm(self, arr: int, val: any):
+        self.__Sh[arr].append(val)
+
+    def get_saved(self, arr: int) -> any:
+        return self.__Sh[arr].pop(0)
+
 class Server2(Server):
     def __init__(self, initRandom20, initRandom21, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
         self.__L = [[], [], [], [], []]
+        self.__Sh = [[], []]
         self.__initRandom20 = initRandom20
         self.__initRandom21 = initRandom21
         self.__initRandomCommon = initRandomCommon
@@ -1007,9 +912,6 @@ class Server2(Server):
         temp2 = self.__L[0].pop(0)
         temp3 = self.__L[2].pop(0)
         temp4 = self.__L[3].pop(0)
-
-        if type(temp1) != bitarray:
-            print(temp1)
             
         m2temp1 = self.subtractF(P, self.multiplyF(P, a, temp1), self.multiplyF(P, a, b))
         m2temp2 = self.subtractF(P, self.multiplyF(P, b, temp2), m2temp1)
@@ -1092,28 +994,6 @@ class Server2(Server):
         
         return [lambda_c2]
 
-    def optimised_offline_AND(self, a, b):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
-        self.__L[0].append(a)
-        self.__L[1].append(b)
-
-        lambda_c2 = self.nextp_randomness(1)
-        self.__L[2].append(lambda_c2)
-        
-        return lambda_c2
-
-    def optimised_offline_AND1(self, a, b):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
-        self.__L[0].append(a)
-        self.__L[1].append(b)
-
-        lambda_c2 = self.nextp_randomness(1)
-        self.__L[2].append(lambda_c2)
-        
-        return [lambda_c2]
-    
     def multibit_optimised_offline_AND(self, a, b, l):
         self.__L[0].append(a)
         self.__L[1].append(b)
@@ -1178,30 +1058,6 @@ class Server2(Server):
             m1 = self.messenger_prev.prevp_receive()
 
         return [m1 ^ m2]
-    
-    def optimised_online_AND(self, a, b):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
-        temp1 = self.__L[1].pop(0)
-        temp2 = self.__L[0].pop(0)
-        temp3 = self.__L[2].pop(0)
-        temp4 = self.__L[3].pop(0)
-
-        m2 = (a & b) ^ (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
-
-        return m2
-    
-    def optimised_online_AND1(self, a, b):
-        a = bitarray(str(a))
-        b = bitarray(str(b))
-        temp1 = self.__L[1].pop(0)
-        temp2 = self.__L[0].pop(0)
-        temp3 = self.__L[2].pop(0)
-        temp4 = self.__L[3].pop(0)
-
-        m2 = (a & b) ^ (a & temp1) ^ (b & temp2) ^ temp3 ^ temp4
-
-        return [m2]
     
     def multibit_optimised_online_AND(self, a, b):
         temp1 = self.__L[1].pop(0)
@@ -1269,12 +1125,6 @@ class Server2(Server):
 
         return lambda1 ^ lambda2 ^ m
     
-    def printMessengers(self):
-        print("S2 to S0", end="")
-        self.messenger_next.printQueuesStatus()
-        print("S2 to S1", end="")
-        self.messenger_prev.printQueuesStatus()
-
     def getnextmessenger(self) -> Messenger:
         return self.messenger_next
 
@@ -1332,3 +1182,9 @@ class Server2(Server):
     
     def flush_optimization(self):
         self.__L[3] = []
+
+    def save_for_comm(self, arr: int, val: any):
+        self.__Sh[arr].append(val)
+
+    def get_saved(self, arr: int) -> any:
+        return self.__Sh[arr].pop(0)

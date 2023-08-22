@@ -180,8 +180,8 @@ class Winnowing:
         vec1 = Counter(fingerprints1_0)
         vec2 = Counter(fingerprints2_0)
         
-        print(len(vec1))
-        print(len(vec2))  
+        print("\"Fingerprint1Len\": " + str(len(vec1)) + ",")
+        print("\"Fingerprint2Len\": " + str(len(vec2)) + ",")
         
         v1key = []
         v1val = []

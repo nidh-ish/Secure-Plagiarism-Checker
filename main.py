@@ -19,38 +19,39 @@ class SecureCosineSimilarity:
                     output.append((i, j))
         return output
 
-    def getSharesfromFile(self, file) -> tuple[list[Share], list[Share], FPVShare]:
-        line = file.readline()
-        L = int(line)
+    def getSharesfromFile(self, filename) -> tuple[list[Share], list[Share], FPVShare]:
         f = []
-        for _ in range(L):
-        # while line:
-            line = file.readline()
-            s = Share()
-            x = line.split(" ")
-            s.add(bitarray(x[0]))
-            s.add(bitarray(x[1]))
-            f.append(s)
         v = []
-        for _ in range(L):
-            line = file.readline()
-            s = Share()
-            x = line.split(" ")
-            s.add(bitarray(x[0]))
-            s.add(bitarray(x[1]))
-            v.append(s)
         IL = []
-        for i in range(4):
+        with open(filename, "r") as file:
             line = file.readline()
-            s = Share()
-            x = line.split(" ")
-            s.add(bitarray(x[0]))
-            s.add(bitarray(x[1]))
-            IL.append(s)
+            L = int(line)
+            for _ in range(L):
+            # while line:
+                line = file.readline()
+                s = Share()
+                x = line.split(" ")
+                s.add(bitarray(x[0]))
+                s.add(bitarray(x[1]))
+                f.append(s)
+            for _ in range(L):
+                line = file.readline()
+                s = Share()
+                x = line.split(" ")
+                s.add(bitarray(x[0]))
+                s.add(bitarray(x[1]))
+                v.append(s)
+            for i in range(4):
+                line = file.readline()
+                s = Share()
+                x = line.split(" ")
+                s.add(bitarray(x[0]))
+                s.add(bitarray(x[1]))
+                IL.append(s)
         ILS = FPVShare(IL[0], IL[1], IL[2], IL[3])
         return f, v, ILS
 
-    def runAESonList(self, f: list[Share], k: Share, S: Server, aes: AES) -> list[Share]:
+    def runAESonList(self, f: list[Share], k: Share, S: Server0 | Server1 | Server2, aes: AES) -> list[Share]:
         
         if S.id() == 0:
             # Offline begins
@@ -68,9 +69,12 @@ class SecureCosineSimilarity:
             aes.circuit_offline([kl1.copy() , kl2.copy()], [lambda1.copy() , lambda2.copy()], S, outputs)
             S.complete_optimised_offline()
             etime = time()
-            print("Offline aes starts -          ", sttime - self.globaltime)
-            print("Offline aes ends -            ", etime - self.globaltime)
-            print("offline aes                   ", - sttime + etime)
+            # print("Offline aes starts -          ", sttime - self.globaltime)
+            # print("Offline aes ends -            ", etime - self.globaltime)
+            # print("offline aes                   ", - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "Offline aes starts - ")
+            S.store_timestamp(etime - self.globaltime, "Offline aes ends - ")
+            S.store_timestamp(- sttime + etime, "Offline aes - ")
             return outputs
 
         if S.id() == 1:
@@ -88,15 +92,21 @@ class SecureCosineSimilarity:
             sttime = time()
             aes.circuit_offline([kl1.copy() , km.copy()], [lambda1.copy() , m1.copy()], S, outputs)
             etime = time()
-            print("Offline aes starts -          ", " "*30, sttime - self.globaltime)
-            print("Offline aes ends -            ", " "*30, etime - self.globaltime)
-            print("offline aes                   ", " "*30, - sttime + etime)
+            # print("Offline aes starts -          ", " "*30, sttime - self.globaltime)
+            # print("Offline aes ends -            ", " "*30, etime - self.globaltime)
+            # print("offline aes                   ", " "*30, - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "Offline aes starts - ")
+            S.store_timestamp(etime - self.globaltime, "Offline aes ends - ")
+            S.store_timestamp(- sttime + etime, "Offline aes - ")
             sttime = time()
             aes.circuit_online([kl1.copy() , km.copy()], [lambda1.copy(), m1.copy()], S, outputs)
             etime = time()
-            print("Online aes starts -           ", " "*30, sttime - self.globaltime)
-            print("Online aes ends -             ", " "*30, etime - self.globaltime)
-            print("online aes                    ", " "*30, - sttime + etime)
+            # print("Online aes starts -           ", " "*30, sttime - self.globaltime)
+            # print("Online aes ends -             ", " "*30, etime - self.globaltime)
+            # print("Online aes                    ", " "*30, - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "Online aes starts - ")
+            S.store_timestamp(etime - self.globaltime, "Online aes ends - ")
+            S.store_timestamp(- sttime + etime, "Online aes - ")
             return outputs
 
         if S.id() == 2:
@@ -115,28 +125,29 @@ class SecureCosineSimilarity:
             aes.circuit_offline([kl2.copy() , km.copy()], [lambda2.copy() , m2.copy()], S, outputs)
             S.complete_optimised_offline()
             etime = time()
-            print("Offline aes starts -          ", " "*30, " "*30, sttime - self.globaltime)
-            print("Offline aes ends -            ", " "*30, " "*30, etime - self.globaltime)
-            print("offline aes                   ", " "*30, " "*30, - sttime + etime)
+            # print("Offline aes starts -          ", " "*30, " "*30, sttime - self.globaltime)
+            # print("Offline aes ends -            ", " "*30, " "*30, etime - self.globaltime)
+            # print("offline aes                   ", " "*30, " "*30, - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "Offline aes starts - ")
+            S.store_timestamp(etime - self.globaltime, "Offline aes ends - ")
+            S.store_timestamp(- sttime + etime, "Offline aes - ")
             sttime = time()
             aes.circuit_online([kl2.copy() , km.copy()], [lambda2.copy() , m2.copy()], S, outputs)
             etime = time()
-            print("Online aes starts -           ", " "*30, " "*30, sttime - self.globaltime)
-            print("Online aes ends -             ", " "*30, " "*30, etime - self.globaltime)
-            print("online aes                    ", " "*30, " "*30, - sttime + etime)
+            # print("Online aes starts -           ", " "*30, " "*30, sttime - self.globaltime)
+            # print("Online aes ends -             ", " "*30, " "*30, etime - self.globaltime)
+            # print("online aes                    ", " "*30, " "*30, - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "Online aes starts - ")
+            S.store_timestamp(etime - self.globaltime, "Online aes ends - ")
+            S.store_timestamp(- sttime + etime, "Online aes - ")
             return outputs
 
-    def reconstructList(self, f: list[Share], S: Server):
-        sttime = time()
+    def reconstructList(self, f: list[Share], S: Server0 | Server1 | Server2):
         output = []
         for i in f:
             x = i.get()
             y = S.online_reconstruction(x[0], x[1])
             output.append(y)
-        etime = time()
-        print("List Reconstruction starts -  ", " "*30*S.id(), sttime - self.globaltime)
-        print("List Reconstruction ends -    ", " "*30*S.id(), etime - self.globaltime)
-        print("List Reconstruction           ", " "*30*S.id(), etime - sttime)
         return output
 
     def reconstructListF(self, f: list[Share], S: Server):
@@ -220,10 +231,18 @@ class SecureCosineSimilarity:
             key.add(lambda2_key)
 
             # Running AES on the fingerprints
-            print(S.id(), "Client 1 AES")
-            encF1 = self.runAESonList(fingerprint1, key, S, aes)
-            print(S.id(), "Client 2 AES")
-            encF2 = self.runAESonList(fingerprint2, key, S, aes)
+            # print(S.id(), "Client 1 AES")
+            L = len(fingerprint1)
+            fingerprints = []
+            for i in range(len(fingerprint1)):
+                fingerprints.append(fingerprint1[i])
+            for i in range(len(fingerprint2)):
+                fingerprints.append(fingerprint2[i])
+            encF = self.runAESonList(fingerprints, key, S, aes)
+            encF1 = encF[:L]
+            encF2 = encF[L:]
+            # print(S.id(), "Client 2 AES")
+            # encF2 = self.runAESonList(fingerprint2, key, S, aes)
 
             # Shuffling Values and Encrypted Fingerprints
             sttime = time()
@@ -231,40 +250,56 @@ class SecureCosineSimilarity:
             temp2 = shuffle.shuffle_offline(61, encF2, values2, S)
             shuffle.optimize_shuffle_offline(S)
             etime = time()
-            print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
-            print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
-            print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
+            # print("Offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
+            # print("Offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
+            # print("Offline shuffling             ", " "*30*S.id(), - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "Offline shuffling starts - ")
+            S.store_timestamp(etime - self.globaltime, "Offline shuffling ends - ")
+            S.store_timestamp(- sttime + etime, "Offline shuffling - ")
             sttime = time()
             temp1 = shuffle.shuffle_online(61, encF1, values1, S)
             temp2 = shuffle.shuffle_online(61, encF2, values2, S)
             etime = time()
-            print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
-            print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
-            print("online shuffling              ", " "*30*S.id(), - sttime + etime)
+            # print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
+            # print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
+            # print("online shuffling              ", " "*30*S.id(), - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "Online shuffling starts - ")
+            S.store_timestamp(etime - self.globaltime, "Online shuffling ends - ")
+            S.store_timestamp(- sttime + etime, "Online shuffling - ")
             encshufF1 = temp1[0]
             shufV1 = temp1[1]
             encshufF2 = temp2[0]
             shufV2 = temp2[1]
+            
+            sttime = time()
 
             # Reconstructing the Shuffled and Encrypted Fingerprints
             Z1 = self.reconstructList(encshufF1, S)
             Z2 = self.reconstructList(encshufF2, S)
+            etime = time()
+            S.store_timestamp(sttime - self.globaltime, "List Reconstruction starts - ")
+            S.store_timestamp(etime - self.globaltime, "List Reconstruction ends - ")
+            S.store_timestamp(- sttime + etime, "List Reconstruction - ")
 
             # Finding the indices of the common fingerprints
             commonindices = self.findCommonIndices(Z1, Z2)
 
-            sttime = time()
+            
             
             # Getting the numerator of CS using the common fingerprints
             Num = self.getNumerator(61, shufV1, shufV2, commonindices, S)
+            sttime = time()
             floatnum = fpv.int2FPV(Num, S)
             tempcs = fpv.FPVMultiply(floatnum, Linv1, S)
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
             etime = time()
-            print("fpv mpc starts -              ", sttime - self.globaltime)
-            print("fpv mpc ends -                ", etime - self.globaltime)
-            print("fpv mpc                       ", - sttime + etime)
+            # print("fpv mpc starts -              ", sttime - self.globaltime)
+            # print("fpv mpc ends -                ", etime - self.globaltime)
+            # print("fpv mpc                       ", - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "fpv mpc starts - ")
+            S.store_timestamp(etime - self.globaltime, "fpv mpc ends - ")
+            S.store_timestamp(- sttime + etime, "fpv mpc - ")
             return csout
 
         if S.id() == 1:
@@ -285,10 +320,20 @@ class SecureCosineSimilarity:
             key.add(m_key)
             
             # Running AES on the fingerprints
-            print(S.id(), "Client 1 AES")
-            encF1 = self.runAESonList(fingerprint1, key, S, aes)
-            print(S.id(), "Client 2 AES")
-            encF2 = self.runAESonList(fingerprint2, key, S, aes)
+            # print(S.id(), "Client 1 AES")
+            # encF1 = self.runAESonList(fingerprint1, key, S, aes)
+            # # print(S.id(), "Client 2 AES")
+            # encF2 = self.runAESonList(fingerprint2, key, S, aes)
+            
+            L = len(fingerprint1)
+            fingerprints = []
+            for i in range(len(fingerprint1)):
+                fingerprints.append(fingerprint1[i])
+            for i in range(len(fingerprint2)):
+                fingerprints.append(fingerprint2[i])
+            encF = self.runAESonList(fingerprints, key, S, aes)
+            encF1 = encF[:L]
+            encF2 = encF[L:]
 
             # Shuffling Values and Encrypted Fingerprints
             sttime = time()
@@ -296,40 +341,56 @@ class SecureCosineSimilarity:
             temp2 = shuffle.shuffle_offline(61, encF2, values2, S)
             shuffle.optimize_shuffle_offline(S)
             etime = time()
-            print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
-            print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
-            print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
+            # print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
+            # print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
+            # print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "Offline shuffling starts - ")
+            S.store_timestamp(etime - self.globaltime, "Offline shuffling ends - ")
+            S.store_timestamp(- sttime + etime, "Offline shuffling - ")
             sttime = time()
             temp1 = shuffle.shuffle_online(61, encF1, values1, S)
             temp2 = shuffle.shuffle_online(61, encF2, values2, S)
             etime = time()
-            print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
-            print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
-            print("online shuffling              ", " "*30*S.id(), - sttime + etime)
+            # print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
+            # print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
+            # print("online shuffling              ", " "*30*S.id(), - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "Online shuffling starts - ")
+            S.store_timestamp(etime - self.globaltime, "Online shuffling ends - ")
+            S.store_timestamp(- sttime + etime, "Online shuffling - ")
             encshufF1 = temp1[0]
             shufV1 = temp1[1]
             encshufF2 = temp2[0]
             shufV2 = temp2[1]
             
+            sttime = time()
+            
             # Reconstructing the Shuffled and Encrypted Fingerprints
             Z1 = self.reconstructList(encshufF1, S)
             Z2 = self.reconstructList(encshufF2, S)
+            etime = time()
+            S.store_timestamp(sttime - self.globaltime, "List Reconstruction starts - ")
+            S.store_timestamp(etime - self.globaltime, "List Reconstruction ends - ")
+            S.store_timestamp(- sttime + etime, "List Reconstruction - ")
             
             # Finding the indices of the common fingerprints
             commonindices = self.findCommonIndices(Z1, Z2)
             
-            sttime = time()
 
             # Getting the numerator of CS using the common fingerprints
             Num = self.getNumerator(61, shufV1, shufV2, commonindices, S)
+            
+            sttime = time()
             floatnum = fpv.int2FPV(Num, S)
             tempcs = fpv.FPVMultiply(floatnum, Linv1, S)
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
             etime = time()
-            print("fpv mpc starts -               ", " "*30, sttime - self.globaltime)
-            print("fpv mpc ends -                 ", " "*30, etime - self.globaltime)
-            print("fpv mpc                        ", " "*30, - sttime + etime)
+            # print("fpv mpc starts -               ", " "*30, sttime - self.globaltime)
+            # print("fpv mpc ends -                 ", " "*30, etime - self.globaltime)
+            # print("fpv mpc                        ", " "*30, - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "fpv mpc starts - ")
+            S.store_timestamp(etime - self.globaltime, "fpv mpc ends - ")
+            S.store_timestamp(- sttime + etime, "fpv mpc - ")
             return csout
 
         if S.id() == 2:
@@ -349,10 +410,20 @@ class SecureCosineSimilarity:
             key.add(m_key)
 
             # Running AES on the fingerprints
-            print(S.id(), "Client 1 AES")
-            encF1 = self.runAESonList(fingerprint1, key, S, aes)
-            print(S.id(), "Client 2 AES")
-            encF2 = self.runAESonList(fingerprint2, key, S, aes)
+            # print(S.id(), "Client 1 AES")
+            # encF1 = self.runAESonList(fingerprint1, key, S, aes)
+            # # print(S.id(), "Client 2 AES")
+            # encF2 = self.runAESonList(fingerprint2, key, S, aes)
+            
+            L = len(fingerprint1)
+            fingerprints = []
+            for i in range(len(fingerprint1)):
+                fingerprints.append(fingerprint1[i])
+            for i in range(len(fingerprint2)):
+                fingerprints.append(fingerprint2[i])
+            encF = self.runAESonList(fingerprints, key, S, aes)
+            encF1 = encF[:L]
+            encF2 = encF[L:]
 
             # Shuffling Values and Encrypted Fingerprints
             sttime = time()
@@ -360,79 +431,108 @@ class SecureCosineSimilarity:
             shuffle.shuffle_offline(61, encF2, values2, S)
             shuffle.optimize_shuffle_offline(S)
             etime = time()
-            print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
-            print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
-            print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
+            # print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
+            # print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
+            # print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "Offline shuffling starts - ")
+            S.store_timestamp(etime - self.globaltime, "Offline shuffling ends - ")
+            S.store_timestamp(- sttime + etime, "Offline shuffling - ")
             sttime = time()
             temp1 = shuffle.shuffle_online(61, encF1, values1, S)
             temp2 = shuffle.shuffle_online(61, encF2, values2, S)
             etime = time()
-            print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
-            print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
-            print("online shuffling              ", " "*30*S.id(), - sttime + etime)
+            # print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
+            # print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
+            # print("online shuffling              ", " "*30*S.id(), - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "Online shuffling starts - ")
+            S.store_timestamp(etime - self.globaltime, "Online shuffling ends - ")
+            S.store_timestamp(- sttime + etime, "Online shuffling - ")
             encshufF1 = temp1[0]
             shufV1 = temp1[1]
             encshufF2 = temp2[0]
             shufV2 = temp2[1]
             
+            sttime = time()
+            
             # Reconstructing the Shuffled and Encrypted Fingerprints
             Z1 = self.reconstructList(encshufF1, S)
             Z2 = self.reconstructList(encshufF2, S)
+            etime = time()
+            S.store_timestamp(sttime - self.globaltime, "List Reconstruction starts - ")
+            S.store_timestamp(etime - self.globaltime, "List Reconstruction ends - ")
+            S.store_timestamp(- sttime + etime, "List Reconstruction - ")
             
             # Finding the indices of the common fingerprints
             commonindices = self.findCommonIndices(Z1, Z2)
 
-            sttime = time()
 
             # Getting the numerator of CS using the common fingerprints
             Num = self.getNumerator(61, shufV1, shufV2, commonindices, S)
+            sttime = time()
             floatnum = fpv.int2FPV(Num, S)
+            
             tempcs = fpv.FPVMultiply(floatnum, Linv1, S)
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
             etime = time()
-            print("fpv mpc starts -               ", " "*30, " "*30, sttime - self.globaltime)
-            print("fpv mpc ends -                 ", " "*30, " "*30, etime - self.globaltime)
-            print("fpv mpc                        ", " "*30, " "*30, - sttime + etime)
+            # print("fpv mpc starts -               ", " "*30, " "*30, sttime - self.globaltime)
+            # print("fpv mpc ends -                 ", " "*30, " "*30, etime - self.globaltime)
+            # print("fpv mpc                        ", " "*30, " "*30, - sttime + etime)
+            S.store_timestamp(sttime - self.globaltime, "fpv mpc starts - ")
+            S.store_timestamp(etime - self.globaltime, "fpv mpc ends - ")
+            S.store_timestamp(- sttime + etime, "fpv mpc - ")
             return csout
 
     def Preprocess(self, program1, filename1, program2, filename2):
         gast = GenAST()
         gast.generate_ast(filename1, program1)
+        f = open(filename1, "r")
+        l1 = len(f.readlines())
+        f.close()
+        f = open(filename2, "r")
+        l2 = len(f.readlines())
+        f.close()
+        print("\"Code1Len\": " + str(l1) + ",")
+        print("\"Code2Len\": " + str(l2) + ",")
         gast2 = GenAST()
         gast2.generate_ast(filename2, program2)
         win = Winnowing()
         win.GentoFile(os.path.join("Program1", "program1"), os.path.join("Program2", "program2"))
     
-    def Run(self, S: Server0 | Server1 | Server2):
+    def Run(self, S: Server0 | Server1 | Server2, output: multiprocessing.Queue):
         sttime = time()
-        print("Sharing starts -              ", " "*30*S.id(), time() - self.globaltime)
+        # print("Sharing starts -              ", " "*30*S.id(), time() - self.globaltime)
+        S.store_timestamp(time() - self.globaltime, "Share reading starts - ")
         c1string = os.path.join("Client1", "Client1_Server") + str(S.id()) + "_v2.dat"
         c2string = os.path.join("Client2", "Client2_Server") + str(S.id()) + "_v2.dat"
-        file0 = open(c1string, "r")
-        f1, v1, IL1 = self.getSharesfromFile(file0)
-        file0.close()
-        file0 = open(c2string, "r")
-        f2, v2, IL2 = self.getSharesfromFile(file0)
-        file0.close()
+        # file0 = open(c1string, "r")
+        f1, v1, IL1 = self.getSharesfromFile(c1string)
+        # file0.close()
+        # file0 = open(c2string, "r")
+        f2, v2, IL2 = self.getSharesfromFile(c2string)
+        # file0.close()
 
         etime = time()
-        print("Sharing ends -                ", " "*30*S.id(), time() - self.globaltime)
-        print("Sharing                       ", " "*30*S.id(), etime - sttime)
+        # print("Sharing ends -                ", " "*30*S.id(), time() - self.globaltime)
+        # print("Sharing                       ", " "*30*S.id(), etime - sttime)
+        S.store_timestamp(time() - self.globaltime, "Share reading ends - ")
+        S.store_timestamp(etime - sttime, "Share reading - ")
 
         out = self.SecureCS(f1, f2, v1, v2, IL1, IL2, S)
         if S.id() == 0:
-            sttime = time()
             with open("Output.dat", "w") as file:
-                print(out)
                 file.write(str(out))
-            etime = time()
-            print("output writing", - sttime + etime)
-            
+        output.put(out)          
         return
 
 if __name__=='__main__':
     
+    filename1 = sys.argv[2]
+    program_number1 = sys.argv[1]
+    filename2 = sys.argv[4]
+    program_number2 = sys.argv[3]
+    print(f"\"o{filename1[-5:-3]}{filename2[-5:-3]}\": {{")
+
     # Messenger between Server0 and Server1
     M01 = Messenger()
     # Messenger between Server0 and Server2
@@ -459,16 +559,28 @@ if __name__=='__main__':
 
     scs = SecureCosineSimilarity()
 
-    filename1 = sys.argv[2]
-    program_number1 = sys.argv[1]
-    filename2 = sys.argv[4]
-    program_number2 = sys.argv[3]
-    print("AST Generation starts - ", time() - scs.globaltime)
+
+    sttime = time()
+    # print("AST Generation starts - ", time() - scs.globaltime)
+    S0.store_timestamp(sttime - scs.globaltime, "AST Generation starts - ")
+    S1.store_timestamp(sttime - scs.globaltime, "AST Generation starts - ")
+    S2.store_timestamp(sttime - scs.globaltime, "AST Generation starts - ")
     scs.Preprocess(program_number1, filename1, program_number2, filename2)
-    print("AST Generation ends - ", time() - scs.globaltime)
-    p0 = multiprocessing.Process(target=scs.Run, args=[S0])
-    p1 = multiprocessing.Process(target=scs.Run, args=[S1])
-    p2 = multiprocessing.Process(target=scs.Run, args=[S2])
+    etime = time()
+    # print("AST Generation ends - ", time() - scs.globaltime)
+    S0.store_timestamp(etime - scs.globaltime, "AST Generation ends - ")
+    S1.store_timestamp(etime - scs.globaltime, "AST Generation ends - ")
+    S2.store_timestamp(etime - scs.globaltime, "AST Generation ends - ")
+    
+    S0.store_timestamp(etime - sttime, "AST Generation - ")
+    S1.store_timestamp(etime - sttime, "AST Generation - ")
+    S2.store_timestamp(etime - sttime, "AST Generation - ")
+    out0 = multiprocessing.Queue()
+    out1 = multiprocessing.Queue()
+    out2 = multiprocessing.Queue()
+    p0 = multiprocessing.Process(target=scs.Run, args=[S0, out0])
+    p1 = multiprocessing.Process(target=scs.Run, args=[S1, out1])
+    p2 = multiprocessing.Process(target=scs.Run, args=[S2, out2])
 
     start_time = time()
 
@@ -482,4 +594,14 @@ if __name__=='__main__':
 
     end_time = time()
 
-    print(-start_time + end_time)
+    # print(-start_time + end_time)
+    S0.store_timestamp(-start_time + end_time, "Total runtime - ")
+    S1.store_timestamp(-start_time + end_time, "Total runtime - ")
+    S2.store_timestamp(-start_time + end_time, "Total runtime - ")
+    S0.print_timestamp()
+    S1.print_timestamp()
+    S2.print_timestamp()
+    # print(out0.qsize(), out1.qsize(), out2.qsize())
+    print("\"Similarity\": " + str(out0.get()) + ",")
+
+    print("},")

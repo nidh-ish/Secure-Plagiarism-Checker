@@ -126,6 +126,7 @@ class Server0(Server):
         self.__initRandomCommon = initRandomCommon
         self.messenger_prev = mess_prev
         self.messenger_next = mess_next
+        self.timestamps = multiprocessing.Queue()
 
     def id(self):
         return 0
@@ -403,6 +404,16 @@ class Server0(Server):
     def get_saved(self, arr: int) -> any:
         return self.__Sh[arr].pop(0)
 
+    def store_timestamp(self, time: float, string: str):
+        self.timestamps.put((string, time))
+
+    def print_timestamp(self):
+        printout = []
+        while not self.timestamps.empty():
+            x = self.timestamps.get()
+            printout.append(x)
+        print(self.id() , ": ", printout, ",")
+
 class Server1(Server):
     def __init__(self, initRandom10, initRandom12, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
         self.__L = [[], [], [], [], []]
@@ -412,6 +423,7 @@ class Server1(Server):
         self.__initRandomCommon = initRandomCommon
         self.messenger_prev = mess_prev
         self.messenger_next = mess_next
+        self.timestamps = multiprocessing.Queue()
 
     def id(self):
         return 1
@@ -791,6 +803,16 @@ class Server1(Server):
     def get_saved(self, arr: int) -> any:
         return self.__Sh[arr].pop(0)
 
+    def store_timestamp(self, time: float, string: str):
+        self.timestamps.put((string, time))
+
+    def print_timestamp(self):
+        printout = []
+        while not self.timestamps.empty():
+            x = self.timestamps.get()
+            printout.append(x)
+        print(self.id() , ": ", printout, ",")
+
 class Server2(Server):
     def __init__(self, initRandom20, initRandom21, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
         self.__L = [[], [], [], [], []]
@@ -800,6 +822,7 @@ class Server2(Server):
         self.__initRandomCommon = initRandomCommon
         self.messenger_prev = mess_prev
         self.messenger_next = mess_next
+        self.timestamps = multiprocessing.Queue()
 
     def id(self):
         return 2 
@@ -1188,3 +1211,13 @@ class Server2(Server):
 
     def get_saved(self, arr: int) -> any:
         return self.__Sh[arr].pop(0)
+
+    def store_timestamp(self, time: float, string: str):
+        self.timestamps.put((string, time))
+
+    def print_timestamp(self):
+        printout = []
+        while not self.timestamps.empty():
+            x = self.timestamps.get()
+            printout.append(x)
+        print(self.id() , ": ", printout, ",")

@@ -1,0 +1,231 @@
+s = input()
+
+vowels = 'AEIOU'
+
+kev = 0
+stu = 0
+
+for i in range(len(s)):
+    if s[i] in vowels:
+        kev += (len(s)-i)
+    else:
+        stu += (len(s)-i)
+
+if kev > stu:
+    print("Kevin", kev)
+elif kev < stu:
+    print("Stuart", stu)
+else:
+    print("Draw")
+
+
+def minion_game(string):
+    kevinScore, stuartScore = [0, 0]
+    for i in range(len(string)):
+        if string[i] in "AEIOU":
+            kevinScore += len(string)-i
+        else:
+            stuartScore += len(string)-i
+    if stuartScore == kevinScore:
+        print("Draw")
+    elif stuartScore > kevinScore:
+        print("Stuart {}".format(stuartScore))
+    else:
+        print("Kevin {}".format(kevinScore))
+
+s = input()
+
+vowels = 'AEIOU'
+
+kevsc = 0
+stusc = 0
+for i in range(len(s)):
+    if s[i] in vowels:
+        kevsc += (len(s)-i)
+    else:
+        stusc += (len(s)-i)
+
+if kevsc > stusc:
+    print("Kevin", kevsc)
+elif kevsc < stusc:
+    print("Stuart", stusc)
+else:
+    print("Draw")
+
+S = list(input())
+#S = "BFEREZKMEYKTNZZTCVZRWZSIIRLEUWGXROAHKCRZNZKUUFWEDJVPMGNGDVHNIGUNKDAUFOIYXVMVBNBMLDQAYJSXNJFVZCERKWJXYUHHLYEBBVRQTXJMGVNFKYHHPZGZOLIBDNTHTZPDJNASKAQPCTXETRZBGIPYHZHOUJPBPRCEKTOWENMEHJVEPPKQISJLTWQOLATVIFOBEXUJPMKXGUDFHBEGMFCCUXBJMXFOKRCICSPQQFFJZTIHMLURFCCVZYIPYGDTJXGXSUAHOKLVYFMSHOSMNNIIRAUPFAAOQHLQCTUGCMCQMOQUXMYBQXJVYRIIQENPTMBYVOVPFYDOJKVUWKDHDWYNVDAMUBBPNTEZZSDADELGNILAZTTMUMWGKXPSQDYVTGXWGDLAZQIJADPTFIJSLIDTLEJFJGWMOCPYLAFMVHQHRLGSIQJXQQKJAVBMFKEENTJZWBDTDVUBZHVTDFCLLETZJRMYMIQYVWWUOIVPGTNZFNTDKBVZKKFDTSQTVSRAADPWIMXEEJHBFRDDDXMOYEHCUHSBWZLHVCKZKUTVWGNTEPYPNGCDMFNKWGARVDMLZJDPIKLWYULIMBOHVOSWZICGZGBKBODQCVIAVTDZQFYLCRWIQBBGMGGERSLPGYASHNYRVVWAVJYASVATKHQNJNYFCUDXKRDNBWHLRIOFVHVFOJQGGAMKNOVDVKJVBRNAIUBZQEBPWKXZUCIRQDRTRGWKTYIJZNBRGQYKOAQCPCRKKXPAAHWLKSJUJZOOIQCSBPDCWHANQPWSIYDBZFCIEWZKYOMMHCHONSOGVMEGGOUKXLGFVOUSIYFFLZAPTLJYWIQVXZZPYVTAOQFQURGULWGFKBYIKJOCSITSBFRIJINCOBHGZRSFYTXFQRFYCIDLXFCASUQAYTHGNBPFTXLUZIXHNXFJIJQABSGNQDOAWXIDSSMLPHHQXYJGVXEJVDVJNCLLBDAYUQFDRGFAAWMAWZZVDAPLHYDU" #406312
+consonants = "bcdfghjklmnpqrstvwxyz".upper()
+vowels = "aeiou".upper()
+scoreK,scoreS = 0,0
+lenS = len(S)
+for i in range(lenS):
+    if S[i] in consonants:
+        scoreS = scoreS + lenS - i
+    if S[i] in vowels:
+        scoreK = scoreK + lenS - i
+if scoreS > scoreK:
+    print("Stuart "+str(scoreS))
+elif scoreS < scoreK:
+    print("Kevin "+str(scoreK))
+else:
+    print("Draw")
+
+def minion_game(string):
+    string.upper()
+    vowels = "AEIOU"
+    Stu, Kev = 0, 0
+    Stu = sum([len(string) - i for i in range(len(string)) if string[i] not in vowels])
+    Kev = sum([len(string) - i for i in range(len(string)) if string[i] in vowels])
+    if Stu > Kev:
+        print("Stuart", Stu)
+    elif Stu < Kev:
+        print("Kevin", Kev)
+    else:
+        print("Draw")
+    
+
+s = input()
+
+vowels = 'AEIOU'
+
+kevsc = 0
+stusc = 0
+for i in range(len(s)):
+    if s[i] in vowels:
+        kevsc += (len(s)-i)
+    else:
+        stusc += (len(s)-i)
+
+if kevsc > stusc:
+    print ("Kevin", kevsc)
+elif kevsc < stusc:
+    print ("Stuart", stusc)
+else:
+    print ("Draw")
+
+st=input()
+s=k=0
+l=len(st)
+for i in range(l):
+    if st[i] in ('A','E','I','O','U'):
+        k+=l-i
+    else:
+        s+=l-i
+        
+if s>k:
+    print("Stuart",s)
+elif k>s:
+    print("Kevin",k)
+else:
+    print("Draw")
+
+s = input()
+
+vowels = 'AEIOU'
+
+kevsc = 0
+stusc = 0
+for i in range(len(s)):
+    if s[i] in vowels:
+        kevsc += (len(s)-i)
+    else:
+        stusc += (len(s)-i)
+
+if kevsc > stusc:
+    print("Kevin " + str(kevsc))
+elif kevsc < stusc:
+    print("Stuart " + str(stusc))
+else:
+    print("Draw")
+
+S = input()
+vowel = const = 0
+vowels = ['A', 'E', 'I', 'O', 'U']
+
+for passes, item in enumerate(S):
+    if item in vowels:
+        vowel += len(S) - passes
+    else:
+        const += len(S) - passes
+     
+if vowel > const:
+    print('Kevin {}'.format(vowel))
+elif vowel < const:
+    print('Stuart {}'.format(const))
+else:
+    print('Draw')
+
+def minion_game(string):
+    scores = {"Stuart": 0, "Kevin": 0}
+    for i in range(len(string)):
+        score = len(string)-i
+        if string[i] in "AEIOU":
+            scores["Kevin"] += score
+        else:
+            scores["Stuart"] += score
+    if scores["Kevin"] == scores["Stuart"]:
+        print("Draw")
+    else:
+        print(*max(scores.items(), key=lambda x: x[1]))
+
+def minion_game(string):
+    # your code goes here
+    kevsc=0
+    stusc=0
+    vowels = 'AEIOU'
+    for i in range(len(s)):
+        if s[i] in vowels:
+            kevsc += (len(s)-i)
+        else:
+            stusc += (len(s)-i)
+
+    if kevsc > stusc:
+        print ("Kevin", kevsc)
+    elif kevsc < stusc:
+        print ("Stuart", stusc)
+    else:
+        print ("Draw")
+    
+
+def minion_game(string):
+    lenstr = len(string)
+    num1=0
+    num2=0
+    index = 0
+    for a in string:
+        if (a.lower()=='a' or a.lower()=='e' or a.lower()=='i' or a.lower()=='o' or a.lower()=='u'):
+            num1 += lenstr-index
+        else:
+            num2 += lenstr-index
+        index += 1
+    if num1 > num2: 
+        print("Kevin",num1)
+    elif num1 < num2:
+        print("Stuart",num2)
+    else:
+        print("Draw")
+    
+    # your code goes here
+
+String = input().strip()
+
+VOWELS = "AEIOU"
+
+kevsc = 0
+stusc = 0
+
+for i in range(len(String)):
+    if String[i] in VOWELS:
+        kevsc += (len(String)-i)
+    else:
+        stusc += (len(String)-i)
+    
+if kevsc > stusc:
+    print ("Kevin",kevsc)
+elif kevsc < stusc:
+    print ("Stuart",stusc)
+else:
+    print ("Draw")
+
+def minion_game(s):
+    N = len(s)

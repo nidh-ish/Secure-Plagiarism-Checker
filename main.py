@@ -143,12 +143,14 @@ class SecureCosineSimilarity:
             return outputs
 
     def reconstructList(self, f: list[Share], S: Server0 | Server1 | Server2):
+        s1 = []
+        s2 = []
         output = []
         for i in f:
             x = i.get()
-            y = S.online_reconstruction(x[0], x[1])
-            output.append(y)
-        return output
+            s1.append(x[0])
+            s2.append(x[1])
+        return  S.online_listreconstruction(s1, s2)
 
     def reconstructListF(self, f: list[Share], S: Server):
         output = []
@@ -497,7 +499,8 @@ class SecureCosineSimilarity:
         gast2 = GenAST()
         gast2.generate_ast(filename2, program2)
         win = Winnowing()
-        win.GentoFile(os.path.join("Program1", "program1"), os.path.join("Program2", "program2"))
+        cs = win.GentoFile(os.path.join("Program1", "program1"), os.path.join("Program2", "program2"))
+        print("\"Plaintext Similarity\": " + str(cs) + ",")
     
     def Run(self, S: Server0 | Server1 | Server2, output: multiprocessing.Queue):
         sttime = time()
@@ -531,7 +534,7 @@ if __name__=='__main__':
     program_number1 = sys.argv[1]
     filename2 = sys.argv[4]
     program_number2 = sys.argv[3]
-    print(f"\"o{filename1[-5:-3]}{filename2[-5:-3]}\": {{")
+    print(f"\"o{filename1}{filename2}\": {{")
 
     # Messenger between Server0 and Server1
     M01 = Messenger()
@@ -562,12 +565,12 @@ if __name__=='__main__':
 
     sttime = time()
     # print("AST Generation starts - ", time() - scs.globaltime)
-    S0.store_timestamp(sttime - scs.globaltime, "AST Generation starts - ")
-    S1.store_timestamp(sttime - scs.globaltime, "AST Generation starts - ")
-    S2.store_timestamp(sttime - scs.globaltime, "AST Generation starts - ")
     scs.Preprocess(program_number1, filename1, program_number2, filename2)
     etime = time()
     # print("AST Generation ends - ", time() - scs.globaltime)
+    S0.store_timestamp(sttime - scs.globaltime, "AST Generation starts - ")
+    S1.store_timestamp(sttime - scs.globaltime, "AST Generation starts - ")
+    S2.store_timestamp(sttime - scs.globaltime, "AST Generation starts - ")
     S0.store_timestamp(etime - scs.globaltime, "AST Generation ends - ")
     S1.store_timestamp(etime - scs.globaltime, "AST Generation ends - ")
     S2.store_timestamp(etime - scs.globaltime, "AST Generation ends - ")
@@ -602,6 +605,6 @@ if __name__=='__main__':
     S1.print_timestamp()
     S2.print_timestamp()
     # print(out0.qsize(), out1.qsize(), out2.qsize())
-    print("\"Similarity\": " + str(out0.get()) + ",")
+    print("\"Secure Similarity\": " + str(out0.get()) + ",")
 
     print("},")

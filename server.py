@@ -356,6 +356,17 @@ class Server0(Server):
 
         return lambda1 ^ lambda2 ^ m
 
+    def online_listreconstruction(self, lambda1: list[bitarray], lambda2: list[bitarray]) -> bitarray:
+        self.messenger_next.nextp_send(lambda2)
+        self.messenger_prev.prevp_send(lambda1)
+        m = self.messenger_next.nextp_receive()
+        while m == None:
+            m = self.messenger_next.nextp_receive()
+        output = []
+        for i in range(len(lambda2)):
+            output.append(lambda1[i] ^ lambda2[i] ^ m[i])
+        return output
+    
     def getnextmessenger(self) -> Messenger:
         return self.messenger_next
 
@@ -741,6 +752,18 @@ class Server1(Server):
 
         return lambda1 ^ lambda2 ^ m
 
+    def online_listreconstruction(self, lambda1: list[bitarray], m: list[bitarray]) -> bitarray:
+        self.messenger_prev.prevp_send(m)
+
+        lambda2 = self.messenger_prev.prevp_receive()
+        while lambda2 == None:
+            lambda2 = self.messenger_prev.prevp_receive()
+
+        output = []
+        for i in range(len(lambda2)):
+            output.append(lambda1[i] ^ lambda2[i] ^ m[i])
+        return output
+    
     def getnextmessenger(self) -> Messenger:
         return self.messenger_next
 
@@ -1147,6 +1170,16 @@ class Server2(Server):
             lambda1 = self.messenger_next.nextp_receive()
 
         return lambda1 ^ lambda2 ^ m
+    
+    def online_listreconstruction(self, lambda2: list[bitarray], m: list[bitarray]) -> bitarray:
+        lambda1 = self.messenger_next.nextp_receive()
+        while lambda1 == None:
+            lambda1 = self.messenger_next.nextp_receive()
+
+        output = []
+        for i in range(len(lambda2)):
+            output.append(lambda1[i] ^ lambda2[i] ^ m[i])
+        return output
     
     def getnextmessenger(self) -> Messenger:
         return self.messenger_next

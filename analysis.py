@@ -1,75 +1,80 @@
-# from main import *
-# from Outputs import *
 import Run as ops
-import os
 
-# print(ops.outputs)
+csvout = []
+fingerprintvector = {}
 
+for j in range(00, 2600, 100):
+    fingerprintvector[(j, j + 100)] = []
 
 for x in ops.outputs:
-
-    avgerror = 0
-    avgfilesize = 0
-    avgfingsize = 0
-
     out = ops.outputs[x]
-
-    l0 = {}
-    l1 = {}
-    l2 = {}
-
-    for m in out[[x for x in out.keys()][0]][0]:
-        l0[m[0]] = 0
-    for m in out[[x for x in out.keys()][0]][1]:
-        l1[m[0]] = 0
-    for m in out[[x for x in out.keys()][0]][2]:
-        l2[m[0]] = 0
-
-    # print(out["o2y1x"][1][0][0])
-    count = 0
     for i in out:
-        for j in range(len(out[i][0])):
-            l0[out[i][0][j][0]] += out[i][0][j][1]
-        for j in range(len(out[i][1])):
-            try:
-                l1[out[i][1][j][0]] += out[i][1][j][1]
-                l2[out[i][2][j][0]] += out[i][2][j][1]
-            except:
-                print(len(out[i][1]), len(out[i][2]), j, i)
-        avgerror += abs(out[i]["Plaintext Similarity"] - out[i]["Secure Similarity"])
-        avgfilesize += out[i]["Code1Len"] + out[i]["Code2Len"]
-        avgfingsize += out[i]["Fingerprint1Len"] + out[i]["Fingerprint2Len"]
+        finger = out[i]["Fingerprint1Len"] + out[i]["Fingerprint2Len"]
+        code = out[i]["Code1Len"] + out[i]["Code2Len"]
+        if out[i]["Plaintext Similarity"] > 0:
+            savedata = {"err": abs(out[i]["Plaintext Similarity"] - out[i]["Secure Similarity"])/out[i]["Plaintext Similarity"], 
+                        "time": out[i]["Total runtime - "],
+                        "fing": finger,
+                        "code": code,
+                        "prp": (out[i][0][8][1] + out[i][1][8][1] + out[i][2][8][1])/3 + (out[i][1][11][1] + out[i][2][11][1])/2,
+                        "shuffle": (out[i][0][11][1] + out[i][1][14][1] + out[i][2][14][1])/3 + (out[i][0][14][1] + out[i][1][17][1] + out[i][2][17][1])/2,
+                        "rec": (out[i][0][17][1] + out[i][1][20][1] + out[i][2][20][1])/3,
+                        "out": (out[i][0][20][1] + out[i][1][23][1] + out[i][2][23][1])/3,
+                        }
+        else:
+            savedata = {"err": abs(out[i]["Plaintext Similarity"] - out[i]["Secure Similarity"]), 
+                        "time": out[i]["Total runtime - "],
+                        "fing": finger,
+                        "code": code,
+                        "prp": (out[i][0][8][1] + out[i][1][8][1] + out[i][2][8][1])/3 + (out[i][1][11][1] + out[i][2][11][1])/2,
+                        "shuffle": (out[i][0][11][1] + out[i][1][14][1] + out[i][2][14][1])/3 + (out[i][0][14][1] + out[i][1][17][1] + out[i][2][17][1])/2,
+                        "rec": (out[i][0][17][1] + out[i][1][20][1] + out[i][2][20][1])/3,
+                        "out": (out[i][0][20][1] + out[i][1][23][1] + out[i][2][23][1])/3,
+                        }
+            
+        x1 = int(finger/100)*100
+        if savedata["out"] < 7.1:
+            fingerprintvector[(x1, x1+100)].append(savedata)
+            # csvout.append([savedata["time"], finger])
+
+for x in fingerprintvector:
+    prints = {
+    "prp" : 0,
+    "shuffle" : 0,
+    "rec" : 0,
+    "out" : 0,
+    "time" : 0,
+    "fing" : 0,
+    "err" : 0,
+    "code" : 0,
+    }
+    count = 0
+    for j in fingerprintvector[x]:
+        for k in j:
+            prints[k] += j[k]
         count += 1
+    for m in prints:
+        prints[m] /= count
+    prints["err"] *= 100
+    csvout.append([prints["time"], prints["fing"]])
+    y = f"    ${x[0]}-{x[1]}$ & ${round(prints['time'], 2)}$ & ${round(prints['prp'], 2)}$ & ${round(prints['shuffle'], 2)}$ & ${round(prints['rec'], 2)}$ & ${round(prints['out'], 2)}$ & ${round(prints['err']*10**6, 2)} \\times " + "10^{-6} $ \\\\ \hline"
+    print(y)
 
-    # print(l0)
-    # print(l1)
-    # print(l2)
+with open("TimefingerComparison.csv", "w") as f:
+    f.write("Fingerprintlen,time\n")
+    for i in range(len(csvout)):
+        f.write(f"{csvout[i][0]}, {csvout[i][1]}\n")
 
-    # averages = {}
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np 
 
-    for i in l0:
-        l0[i] /= count
-    for i in l0:
-        l1[i] /= count
-        l2[i] /= count
-
-    avgerror /= count
-    avgfilesize /= count
-    avgfingsize /= count
-    # print(l0)
-    # print(l1)
-    # print(l2)
-
-    with open(os.path.join("Run", f"averageoutput{x}.txt"), "w") as f:
-        f.write("0: ",)
-        for i in l0:
-            f.write(f"{i}: {l0[i]}, ")
-        f.write("\n1: ",)
-        for i in l1:
-            f.write(f"{i}: {l1[i]}, ")
-        f.write("\n2: ",)
-        for i in l2:
-            f.write(f"{i}: {l2[i]}, ")
-        f.write(f"\nAverage error: {avgerror}")
-        f.write(f"\nAverage Code Length: {avgfilesize}")
-        f.write(f"\nAverage Fingerprint Length: {avgfingsize}")
+csv = pd.read_csv("TimefingerComparison.csv")
+# print(csv.columns)
+theta = np.polyfit(csv["time"], csv["Fingerprintlen"], 1)
+y_line = theta[1] + theta[0] * csv["time"]
+plt.scatter(csv["time"], csv["Fingerprintlen"], s=1, c="black" )
+plt.plot(csv["time"], y_line, "black", linewidth=0.7)
+plt.xlabel("Combined fingerprint length")
+plt.ylabel("Run time in seconds")
+plt.show()

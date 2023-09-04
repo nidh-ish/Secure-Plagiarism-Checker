@@ -4,6 +4,7 @@ from shuffle import *
 from fpv import *
 from winnowing import *
 from time import *
+import winsound
 
 class SecureCosineSimilarity:
     def __init__(self):
@@ -231,9 +232,7 @@ class SecureCosineSimilarity:
             key = Share()
             key.add(lambda1_key)
             key.add(lambda2_key)
-
-            # Running AES on the fingerprints
-            # print(S.id(), "Client 1 AES")
+            
             L = len(fingerprint1)
             fingerprints = []
             for i in range(len(fingerprint1)):
@@ -243,18 +242,12 @@ class SecureCosineSimilarity:
             encF = self.runAESonList(fingerprints, key, S, aes)
             encF1 = encF[:L]
             encF2 = encF[L:]
-            # print(S.id(), "Client 2 AES")
-            # encF2 = self.runAESonList(fingerprint2, key, S, aes)
-
             # Shuffling Values and Encrypted Fingerprints
             sttime = time()
             temp1 = shuffle.shuffle_offline(61, encF1, values1, S)
             temp2 = shuffle.shuffle_offline(61, encF2, values2, S)
             shuffle.optimize_shuffle_offline(S)
             etime = time()
-            # print("Offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
-            # print("Offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
-            # print("Offline shuffling             ", " "*30*S.id(), - sttime + etime)
             S.store_timestamp(sttime - self.globaltime, "Offline shuffling starts - ")
             S.store_timestamp(etime - self.globaltime, "Offline shuffling ends - ")
             S.store_timestamp(- sttime + etime, "Offline shuffling - ")
@@ -262,9 +255,6 @@ class SecureCosineSimilarity:
             temp1 = shuffle.shuffle_online(61, encF1, values1, S)
             temp2 = shuffle.shuffle_online(61, encF2, values2, S)
             etime = time()
-            # print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
-            # print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
-            # print("online shuffling              ", " "*30*S.id(), - sttime + etime)
             S.store_timestamp(sttime - self.globaltime, "Online shuffling starts - ")
             S.store_timestamp(etime - self.globaltime, "Online shuffling ends - ")
             S.store_timestamp(- sttime + etime, "Online shuffling - ")
@@ -284,24 +274,19 @@ class SecureCosineSimilarity:
             S.store_timestamp(- sttime + etime, "List Reconstruction - ")
 
             # Finding the indices of the common fingerprints
-            commonindices = self.findCommonIndices(Z1, Z2)
-
-            
+            commonindices = self.findCommonIndices(Z1, Z2)           
             
             # Getting the numerator of CS using the common fingerprints
             Num = self.getNumerator(61, shufV1, shufV2, commonindices, S)
-            sttime = time()
+            sttime1 = time()
             floatnum = fpv.int2FPV(Num, S)
             tempcs = fpv.FPVMultiply(floatnum, Linv1, S)
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
-            etime = time()
-            # print("fpv mpc starts -              ", sttime - self.globaltime)
-            # print("fpv mpc ends -                ", etime - self.globaltime)
-            # print("fpv mpc                       ", - sttime + etime)
-            S.store_timestamp(sttime - self.globaltime, "fpv mpc starts - ")
-            S.store_timestamp(etime - self.globaltime, "fpv mpc ends - ")
-            S.store_timestamp(- sttime + etime, "fpv mpc - ")
+            etime1 = time()
+            S.store_timestamp(sttime1 - self.globaltime, "fpv mpc starts - ")
+            S.store_timestamp(etime1 - self.globaltime, "fpv mpc ends - ")
+            S.store_timestamp(- sttime1 + etime1, "fpv mpc - ")
             return csout
 
         if S.id() == 1:
@@ -321,12 +306,6 @@ class SecureCosineSimilarity:
             key.add(lambda1_key)
             key.add(m_key)
             
-            # Running AES on the fingerprints
-            # print(S.id(), "Client 1 AES")
-            # encF1 = self.runAESonList(fingerprint1, key, S, aes)
-            # # print(S.id(), "Client 2 AES")
-            # encF2 = self.runAESonList(fingerprint2, key, S, aes)
-            
             L = len(fingerprint1)
             fingerprints = []
             for i in range(len(fingerprint1)):
@@ -343,9 +322,6 @@ class SecureCosineSimilarity:
             temp2 = shuffle.shuffle_offline(61, encF2, values2, S)
             shuffle.optimize_shuffle_offline(S)
             etime = time()
-            # print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
-            # print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
-            # print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
             S.store_timestamp(sttime - self.globaltime, "Offline shuffling starts - ")
             S.store_timestamp(etime - self.globaltime, "Offline shuffling ends - ")
             S.store_timestamp(- sttime + etime, "Offline shuffling - ")
@@ -353,9 +329,6 @@ class SecureCosineSimilarity:
             temp1 = shuffle.shuffle_online(61, encF1, values1, S)
             temp2 = shuffle.shuffle_online(61, encF2, values2, S)
             etime = time()
-            # print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
-            # print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
-            # print("online shuffling              ", " "*30*S.id(), - sttime + etime)
             S.store_timestamp(sttime - self.globaltime, "Online shuffling starts - ")
             S.store_timestamp(etime - self.globaltime, "Online shuffling ends - ")
             S.store_timestamp(- sttime + etime, "Online shuffling - ")
@@ -377,7 +350,6 @@ class SecureCosineSimilarity:
             # Finding the indices of the common fingerprints
             commonindices = self.findCommonIndices(Z1, Z2)
             
-
             # Getting the numerator of CS using the common fingerprints
             Num = self.getNumerator(61, shufV1, shufV2, commonindices, S)
             
@@ -387,9 +359,6 @@ class SecureCosineSimilarity:
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
             etime = time()
-            # print("fpv mpc starts -               ", " "*30, sttime - self.globaltime)
-            # print("fpv mpc ends -                 ", " "*30, etime - self.globaltime)
-            # print("fpv mpc                        ", " "*30, - sttime + etime)
             S.store_timestamp(sttime - self.globaltime, "fpv mpc starts - ")
             S.store_timestamp(etime - self.globaltime, "fpv mpc ends - ")
             S.store_timestamp(- sttime + etime, "fpv mpc - ")
@@ -410,12 +379,6 @@ class SecureCosineSimilarity:
             key = Share()
             key.add(lambda2_key)
             key.add(m_key)
-
-            # Running AES on the fingerprints
-            # print(S.id(), "Client 1 AES")
-            # encF1 = self.runAESonList(fingerprint1, key, S, aes)
-            # # print(S.id(), "Client 2 AES")
-            # encF2 = self.runAESonList(fingerprint2, key, S, aes)
             
             L = len(fingerprint1)
             fingerprints = []
@@ -433,9 +396,6 @@ class SecureCosineSimilarity:
             shuffle.shuffle_offline(61, encF2, values2, S)
             shuffle.optimize_shuffle_offline(S)
             etime = time()
-            # print("offline shuffling starts -    ", " "*30*S.id(), sttime - self.globaltime)
-            # print("offline shuffling ends -      ", " "*30*S.id(), etime - self.globaltime)
-            # print("offline shuffling             ", " "*30*S.id(), - sttime + etime)
             S.store_timestamp(sttime - self.globaltime, "Offline shuffling starts - ")
             S.store_timestamp(etime - self.globaltime, "Offline shuffling ends - ")
             S.store_timestamp(- sttime + etime, "Offline shuffling - ")
@@ -443,9 +403,6 @@ class SecureCosineSimilarity:
             temp1 = shuffle.shuffle_online(61, encF1, values1, S)
             temp2 = shuffle.shuffle_online(61, encF2, values2, S)
             etime = time()
-            # print("online shuffling starts -     ", " "*30*S.id(), sttime - self.globaltime)
-            # print("online shuffling ends -       ", " "*30*S.id(), etime - self.globaltime)
-            # print("online shuffling              ", " "*30*S.id(), - sttime + etime)
             S.store_timestamp(sttime - self.globaltime, "Online shuffling starts - ")
             S.store_timestamp(etime - self.globaltime, "Online shuffling ends - ")
             S.store_timestamp(- sttime + etime, "Online shuffling - ")
@@ -477,9 +434,6 @@ class SecureCosineSimilarity:
             cs = fpv.FPVMultiply(tempcs, Linv2, S)
             csout = fpv.FPVonline_reconstruction2Float(cs, S)
             etime = time()
-            # print("fpv mpc starts -               ", " "*30, " "*30, sttime - self.globaltime)
-            # print("fpv mpc ends -                 ", " "*30, " "*30, etime - self.globaltime)
-            # print("fpv mpc                        ", " "*30, " "*30, - sttime + etime)
             S.store_timestamp(sttime - self.globaltime, "fpv mpc starts - ")
             S.store_timestamp(etime - self.globaltime, "fpv mpc ends - ")
             S.store_timestamp(- sttime + etime, "fpv mpc - ")
@@ -504,27 +458,16 @@ class SecureCosineSimilarity:
     
     def Run(self, S: Server0 | Server1 | Server2, output: multiprocessing.Queue):
         sttime = time()
-        # print("Sharing starts -              ", " "*30*S.id(), time() - self.globaltime)
         S.store_timestamp(time() - self.globaltime, "Share reading starts - ")
         c1string = os.path.join("Client1", "Client1_Server") + str(S.id()) + "_v2.dat"
         c2string = os.path.join("Client2", "Client2_Server") + str(S.id()) + "_v2.dat"
-        # file0 = open(c1string, "r")
         f1, v1, IL1 = self.getSharesfromFile(c1string)
-        # file0.close()
-        # file0 = open(c2string, "r")
         f2, v2, IL2 = self.getSharesfromFile(c2string)
-        # file0.close()
-
         etime = time()
-        # print("Sharing ends -                ", " "*30*S.id(), time() - self.globaltime)
-        # print("Sharing                       ", " "*30*S.id(), etime - sttime)
         S.store_timestamp(time() - self.globaltime, "Share reading ends - ")
         S.store_timestamp(etime - sttime, "Share reading - ")
 
         out = self.SecureCS(f1, f2, v1, v2, IL1, IL2, S)
-        if S.id() == 0:
-            with open("Output.dat", "w") as file:
-                file.write(str(out))
         output.put(out)          
         return
 
@@ -598,13 +541,15 @@ if __name__=='__main__':
     end_time = time()
 
     # print(-start_time + end_time)
-    S0.store_timestamp(-start_time + end_time, "Total runtime - ")
-    S1.store_timestamp(-start_time + end_time, "Total runtime - ")
-    S2.store_timestamp(-start_time + end_time, "Total runtime - ")
+    # S0.store_timestamp(-start_time + end_time, "Total runtime - ")
+    # S1.store_timestamp(-start_time + end_time, "Total runtime - ")
+    # S2.store_timestamp(-start_time + end_time, "Total runtime - ")
     S0.print_timestamp()
     S1.print_timestamp()
     S2.print_timestamp()
     # print(out0.qsize(), out1.qsize(), out2.qsize())
+    print("\"Total runtime - \": " + str(-start_time + end_time) + ",")
     print("\"Secure Similarity\": " + str(out0.get()) + ",")
 
     print("},")
+    # winsound.Beep(4000, 100)

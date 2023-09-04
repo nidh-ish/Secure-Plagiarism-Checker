@@ -7,10 +7,7 @@ def getSharesfromFile(file) -> tuple[list[Share], list[Share], FPVShare]:
         line = file.readline()
         L = int(line)
         f = []
-        # line = file.readline()
-        # line = file.readline()
         for _ in range(L):
-        # while line:
             line = file.readline()
             s = Share()
             x = line.split(" ")

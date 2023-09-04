@@ -425,6 +425,15 @@ class Server0(Server):
             printout.append(x)
         print(self.id() , ": ", printout, ",")
 
+    def get_timestamp(self):
+        printout = []
+        while not self.timestamps.empty():
+            x = self.timestamps.get()
+            printout.append(x)
+        for i in range(len(printout)):
+            self.timestamps.put(printout[i])
+        return printout
+
 class Server1(Server):
     def __init__(self, initRandom10, initRandom12, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
         self.__L = [[], [], [], [], []]
@@ -835,6 +844,15 @@ class Server1(Server):
             x = self.timestamps.get()
             printout.append(x)
         print(self.id() , ": ", printout, ",")
+        
+    def get_timestamp(self):
+        printout = []
+        while not self.timestamps.empty():
+            x = self.timestamps.get()
+            printout.append(x)
+        for i in range(len(printout)):
+            self.timestamps.put(printout[i])
+        return printout
 
 class Server2(Server):
     def __init__(self, initRandom20, initRandom21, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
@@ -1254,3 +1272,12 @@ class Server2(Server):
             x = self.timestamps.get()
             printout.append(x)
         print(self.id() , ": ", printout, ",")
+        
+    def get_timestamp(self):
+        printout = []
+        while not self.timestamps.empty():
+            x = self.timestamps.get()
+            printout.append(x)
+        for i in range(len(printout)):
+            self.timestamps.put(printout[i])
+        return printout

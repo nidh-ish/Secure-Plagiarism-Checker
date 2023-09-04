@@ -126,6 +126,7 @@ class Server0(Server):
         self.__initRandomCommon = initRandomCommon
         self.messenger_prev = mess_prev
         self.messenger_next = mess_next
+        self.timestamps = multiprocessing.Queue()
 
     def id(self):
         return 0
@@ -355,6 +356,17 @@ class Server0(Server):
 
         return lambda1 ^ lambda2 ^ m
 
+    def online_listreconstruction(self, lambda1: list[bitarray], lambda2: list[bitarray]) -> bitarray:
+        self.messenger_next.nextp_send(lambda2)
+        self.messenger_prev.prevp_send(lambda1)
+        m = self.messenger_next.nextp_receive()
+        while m == None:
+            m = self.messenger_next.nextp_receive()
+        output = []
+        for i in range(len(lambda2)):
+            output.append(lambda1[i] ^ lambda2[i] ^ m[i])
+        return output
+    
     def getnextmessenger(self) -> Messenger:
         return self.messenger_next
 
@@ -403,6 +415,25 @@ class Server0(Server):
     def get_saved(self, arr: int) -> any:
         return self.__Sh[arr].pop(0)
 
+    def store_timestamp(self, time: float, string: str):
+        self.timestamps.put((string, time))
+
+    def print_timestamp(self):
+        printout = []
+        while not self.timestamps.empty():
+            x = self.timestamps.get()
+            printout.append(x)
+        print(self.id() , ": ", printout, ",")
+
+    def get_timestamp(self):
+        printout = []
+        while not self.timestamps.empty():
+            x = self.timestamps.get()
+            printout.append(x)
+        for i in range(len(printout)):
+            self.timestamps.put(printout[i])
+        return printout
+
 class Server1(Server):
     def __init__(self, initRandom10, initRandom12, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
         self.__L = [[], [], [], [], []]
@@ -412,6 +443,7 @@ class Server1(Server):
         self.__initRandomCommon = initRandomCommon
         self.messenger_prev = mess_prev
         self.messenger_next = mess_next
+        self.timestamps = multiprocessing.Queue()
 
     def id(self):
         return 1
@@ -729,6 +761,18 @@ class Server1(Server):
 
         return lambda1 ^ lambda2 ^ m
 
+    def online_listreconstruction(self, lambda1: list[bitarray], m: list[bitarray]) -> bitarray:
+        self.messenger_prev.prevp_send(m)
+
+        lambda2 = self.messenger_prev.prevp_receive()
+        while lambda2 == None:
+            lambda2 = self.messenger_prev.prevp_receive()
+
+        output = []
+        for i in range(len(lambda2)):
+            output.append(lambda1[i] ^ lambda2[i] ^ m[i])
+        return output
+    
     def getnextmessenger(self) -> Messenger:
         return self.messenger_next
 
@@ -791,6 +835,25 @@ class Server1(Server):
     def get_saved(self, arr: int) -> any:
         return self.__Sh[arr].pop(0)
 
+    def store_timestamp(self, time: float, string: str):
+        self.timestamps.put((string, time))
+
+    def print_timestamp(self):
+        printout = []
+        while not self.timestamps.empty():
+            x = self.timestamps.get()
+            printout.append(x)
+        print(self.id() , ": ", printout, ",")
+        
+    def get_timestamp(self):
+        printout = []
+        while not self.timestamps.empty():
+            x = self.timestamps.get()
+            printout.append(x)
+        for i in range(len(printout)):
+            self.timestamps.put(printout[i])
+        return printout
+
 class Server2(Server):
     def __init__(self, initRandom20, initRandom21, initRandomCommon, mess_prev: Messenger, mess_next: Messenger) -> None:
         self.__L = [[], [], [], [], []]
@@ -800,6 +863,7 @@ class Server2(Server):
         self.__initRandomCommon = initRandomCommon
         self.messenger_prev = mess_prev
         self.messenger_next = mess_next
+        self.timestamps = multiprocessing.Queue()
 
     def id(self):
         return 2 
@@ -1125,6 +1189,16 @@ class Server2(Server):
 
         return lambda1 ^ lambda2 ^ m
     
+    def online_listreconstruction(self, lambda2: list[bitarray], m: list[bitarray]) -> bitarray:
+        lambda1 = self.messenger_next.nextp_receive()
+        while lambda1 == None:
+            lambda1 = self.messenger_next.nextp_receive()
+
+        output = []
+        for i in range(len(lambda2)):
+            output.append(lambda1[i] ^ lambda2[i] ^ m[i])
+        return output
+    
     def getnextmessenger(self) -> Messenger:
         return self.messenger_next
 
@@ -1188,3 +1262,22 @@ class Server2(Server):
 
     def get_saved(self, arr: int) -> any:
         return self.__Sh[arr].pop(0)
+
+    def store_timestamp(self, time: float, string: str):
+        self.timestamps.put((string, time))
+
+    def print_timestamp(self):
+        printout = []
+        while not self.timestamps.empty():
+            x = self.timestamps.get()
+            printout.append(x)
+        print(self.id() , ": ", printout, ",")
+        
+    def get_timestamp(self):
+        printout = []
+        while not self.timestamps.empty():
+            x = self.timestamps.get()
+            printout.append(x)
+        for i in range(len(printout)):
+            self.timestamps.put(printout[i])
+        return printout

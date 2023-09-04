@@ -1,5 +1,6 @@
 from server import *
 import math
+from time import time
 import struct
 
 class FPVShare:
@@ -919,6 +920,11 @@ class FPVArithmetic:
     
     def LT(self, A: list[bitarray], B: list[bitarray], l: int, S: Server0 | Server1 | Server2):
         if S.id() == 0:
+            Z0 = S.subtractF(self.P, A[0], B[0])
+            Z1 = S.subtractF(self.P, A[1], B[1])
+            eqz = self.EQZ([Z0, Z1], l, S)
+            z0 = S.find_additive_inverse(self.P, eqz[0])
+            z1 = S.find_additive_inverse(self.P, eqz[1])
             adec = self.BitDec(A, l, l, S)
             bdec = self.BitDec(B, l, l, S)
             a = self.BittoField(adec, S)
@@ -929,8 +935,16 @@ class FPVArithmetic:
                 b1 = S.find_additive_inverse(self.P, b[i][1])
                 bprime.append([b0, b1])
             carry = self.CarryOutbitShareShare(a, bprime, S)
-            return S.find_additive_inverse(self.P, carry[0]), S.find_additive_inverse(self.P, carry[1])
+            outtemp0 = S.find_additive_inverse(self.P, carry[0])
+            outtemp1 = S.find_additive_inverse(self.P, carry[1])
+            out, out0, out1 = S.offline_ANDF(self.P, S.addF(self.P, outtemp0, outtemp1), S.addF(self.P, z0, z1))
+            return out0, out1
         else:
+            Z_off = S.subtractF(self.P, A[0], B[0])
+            Z_on = S.subtractF(self.P, A[1], B[1])
+            eqz = self.EQZ([Z_off, Z_on], l, S)
+            z_off = S.find_additive_inverse(self.P, eqz[0])
+            z_on = S.subtractF(self.P, eqz[1], int2ba(1))
             adec = self.BitDec(A, l, l, S)
             bdec = self.BitDec(B, l, l, S)
             a = self.BittoField(adec, S)
@@ -941,7 +955,11 @@ class FPVArithmetic:
                 b1 = S.subtractF(self.P, b[i][1], int2ba(1))
                 bprime.append([b0, b1])
             carry = self.CarryOutbitShareShare(a, bprime, S)
-            return S.find_additive_inverse(self.P, carry[0]), S.subtractF(self.P, carry[1], int2ba(1))
+            outtemp_off = S.find_additive_inverse(self.P, carry[0]) 
+            outtemp_on = S.subtractF(self.P, carry[1], int2ba(1))
+            out_off = S.offline_ANDF(self.P, outtemp_off, z_off)
+            out_on = S.online_ANDF(self.P, outtemp_on, z_on)
+            return out_off, out_on
 
     def Truncate(self, A:list[bitarray], l: int, m: list[bitarray], S: Server0 | Server1 | Server2):
         if S.id() == 0:
@@ -1279,7 +1297,7 @@ class FPVArithmetic:
 def TestFunctions(A: list[bitarray], B: list[bitarray], C :list[bitarray], S: Server0 | Server1 | Server2):
     fpv = FPVArithmetic()
     if S.id() == 0:
-        x = int2ba(17)
+        x = int2ba(1)
         xl1, xl2 = S.offline_shareF(61, 0)
         xm = S.online_shareF(61, 0, xl1, xl2, x)
         p = S.online_reconstructionF(61, xl1, xl2)
@@ -1287,16 +1305,23 @@ def TestFunctions(A: list[bitarray], B: list[bitarray], C :list[bitarray], S: Se
         x = Share()
         x.add(xl1)
         x.add(xl2)
+        t1 = time()
         sharex = fpv.int2FPV(x, S)
+        t2 = time()
         offlinedata = fpv.FPVoffline_shareFloat(1, S)
         sharey = fpv.FPVonline_shareFloat(1, offlinedata, None, S)
         offlinedata = fpv.FPVoffline_shareFloat(2, S)
         sharez = fpv.FPVonline_shareFloat(2, offlinedata, None, S)
+        t3 = time()
         outoff = fpv.FPVMultiply(sharex, sharey, S)
+        t4 = time()
         v = fpv.FPVonline_reconstruction2Float(outoff, S)
         print(v)
+        t5 = time()
         output = fpv.FPVMultiply(outoff, sharez, S)
+        t6 = time()
         v = fpv.FPVonline_reconstruction2Float(output, S)
+        t7 = time()
         print(v)
 
     elif S.id() == 1:
@@ -1306,16 +1331,23 @@ def TestFunctions(A: list[bitarray], B: list[bitarray], C :list[bitarray], S: Se
         x = Share()
         x.add(xl1)
         x.add(xm)
+        t1 = time()
         sharex = fpv.int2FPV(x, S)
-        y = 0.2672612419124244
+        t2 = time()
+        y = 0.2
         offlinedata = fpv.FPVoffline_shareFloat(1, S)
         sharey = fpv.FPVonline_shareFloat(1, offlinedata, y, S)
         offlinedata = fpv.FPVoffline_shareFloat(2, S)
         sharez = fpv.FPVonline_shareFloat(2, offlinedata, None, S)
+        t3 = time()
         outoff = fpv.FPVMultiply(sharex, sharey, S)
+        t4 = time()
         v = fpv.FPVonline_reconstruction2Float(outoff, S)
+        t5 = time()
         output = fpv.FPVMultiply(outoff, sharez, S)
+        t6 = time()
         v = fpv.FPVonline_reconstruction2Float(output, S)
+        t7 = time()
 
     else:
         xl2 = S.offline_shareF(61, 0)
@@ -1324,16 +1356,23 @@ def TestFunctions(A: list[bitarray], B: list[bitarray], C :list[bitarray], S: Se
         x = Share()
         x.add(xl2)
         x.add(xm)
+        t1 = time()
         sharex = fpv.int2FPV(x, S)
+        t2 = time()
         offlinedata = fpv.FPVoffline_shareFloat(1, S)
         sharey = fpv.FPVonline_shareFloat(1, offlinedata, None, S)
-        z = 0.14907119849998599
+        z = 2.5
         offlinedata = fpv.FPVoffline_shareFloat(2, S)
         sharez = fpv.FPVonline_shareFloat(2, offlinedata, z, S)
+        t3 = time()
         outoff = fpv.FPVMultiply(sharex, sharey, S)
+        t4 = time()
         v = fpv.FPVonline_reconstruction2Float(outoff, S)
+        t5 = time()
         output = fpv.FPVMultiply(outoff, sharez, S)
+        t6 = time()
         v = fpv.FPVonline_reconstruction2Float(output, S)
+        t7 = time()
 
 if __name__ == "__main__":
     

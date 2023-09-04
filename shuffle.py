@@ -1,4 +1,5 @@
 from server import *
+from time import *
 
 def getSharesfromFileF(f) -> list[Share]:
     line = f.readline()
@@ -74,24 +75,18 @@ class Shuffle:
         for i in A:
             temp.append(ba2hex(i))
     
-    def helper(self, Input: list[Share], S: Server0 | Server1 | Server2, Serveri: int, Serverj: int, Permutation: list[int] | None) -> list[Share]:
-        L = len(Input)
-        Output = []
+    def helper(self, Input: tuple[list[bitarray], list[bitarray]], S: Server0 | Server1 | Server2, Serveri: int, Serverj: int, Permutation: list[int] | None) -> tuple[list[bitarray], list[bitarray]] | list[list[bitarray]]:
+        L = len(Input[0])
         
         # Server 0's code
         if S.id() == 0:
         #Offline begins
             alpha = []
             beta = []
-            lambdaIn1 = []
-            lambdaIn2 = []
+            lambdaIn1 = Input[0]
+            lambdaIn2 = Input[1]
             lambdaOut1 = []
             lambdaOut2 = []
-
-            for i in range(L):
-                shares = Input[i].get()
-                lambdaIn1.append(shares[0])
-                lambdaIn2.append(shares[1])
 
             # Generate lambdaOut1 and lambdaOut2
             for _ in range(L):
@@ -123,25 +118,16 @@ class Shuffle:
                 mOutS1 = self.ArrayXOR([temp1, lambdaOut1, beta])
                 S.save_for_comm(1, mOutS1)
 
-            for i in range(L):
-                share = Share()
-                share.add(lambdaOut1[i])
-                share.add(lambdaOut2[i])
-                Output.append(share)
+            return lambdaOut1, lambdaOut2
 
         # Server 1's code
         if S.id() == 1:
         #Offline begins
             alpha = []
-            lambdaIn1 = []
-            mIn = []
+            lambdaIn1 = Input[0]
+            mIn = Input[1]
             lambdaOut1 = []
             mOut = []
-
-            for i in range(L):
-                shares = Input[i].get()
-                lambdaIn1.append(shares[0])
-                mIn.append(shares[1])
                 
             # Generate lambdaOut1
             for _ in range(L):
@@ -166,24 +152,16 @@ class Shuffle:
                 mOutS1 = self.ArrayXOR([temp1, lambdaOut1.copy(), temp2])
                 S.save_for_comm(1, mOutS1)
                 
-            for i in range(L):
-                share = Share()
-                share.add(lambdaOut1[i])
-                Output.append(share)
+            return [lambdaOut1]
 
         # Server 2's code
         if S.id() == 2:
         #Offline begins
             alpha = []
-            lambdaIn2 = []
-            mIn = []
+            lambdaIn2 = Input[0]
+            mIn = Input[1]
             lambdaOut2 = []
             mOut = []
-
-            for i in range(L):
-                shares = Input[i].get()
-                lambdaIn2.append(shares[0])
-                mIn.append(shares[1])
 
             # Generate lambdaOut2
             for _ in range(L):
@@ -207,30 +185,22 @@ class Shuffle:
                 mOutS2 = self.ArrayXOR([temp1, lambdaOut2.copy()])
                 S.save_for_comm(1, mOutS2)
 
-            for i in range(L):
-                share = Share()
-                share.add(lambdaOut2[i])
-                Output.append(share)
-        return Output
+            return [lambdaOut2]
+        # return Output
     
-    def helperF(self, P: int ,Input: list[Share], S: Server0 | Server1 | Server2, Serveri: int, Serverj: int, Permutation: list[int] | None) -> list[Share]:
-        L = len(Input)
-        Output = []
+    def helperF(self, P: int ,Input: tuple[list[bitarray], list[bitarray]], S: Server0 | Server1 | Server2, Serveri: int, Serverj: int, Permutation: list[int] | None) -> tuple[list[bitarray], list[bitarray]] | list[list[bitarray]]:
+        L = len(Input[0])
+        # Output = []
         
         # Server 0's code
         if S.id() == 0:
         #Offline begins
             alpha = []
             beta = []
-            lambdaIn1 = []
-            lambdaIn2 = []
+            lambdaIn1 = Input[0]
+            lambdaIn2 = Input[1]
             lambdaOut1 = []
             lambdaOut2 = []
-
-            for i in range(L):
-                shares = Input[i].get()
-                lambdaIn1.append(shares[0])
-                lambdaIn2.append(shares[1])
 
             # Generate lambdaOut1 and lambdaOut2
             for _ in range(L):
@@ -264,26 +234,17 @@ class Shuffle:
                 mOutS1 = self.ArraySubtractF(P, temp1, temp2, S)
                 S.save_for_comm(1, mOutS1)
 
-            for i in range(L):
-                share = Share()
-                share.add(lambdaOut1[i])
-                share.add(lambdaOut2[i])
-                Output.append(share)
+            return lambdaOut1, lambdaOut2
 
         # Server 1's code
         if S.id() == 1:
         #Offline begins
             alpha = []
-            lambdaIn1 = []
-            mIn = []
+            lambdaIn1 = Input[0]
+            mIn = Input[1]
             lambdaOut1 = []
             mOut = []
 
-            for i in range(L):
-                shares = Input[i].get()
-                lambdaIn1.append(shares[0])
-                mIn.append(shares[1])
-                
             # Generate lambdaOut1
             for _ in range(L):
                 lambdaOut1.append(S.prevp_randomnessF(P, P-1))
@@ -310,24 +271,16 @@ class Shuffle:
                 mOutS1 = self.ArraySubtractF(P, temp1, temp3, S)
                 S.save_for_comm(1, mOutS1)
                 
-            for i in range(L):
-                share = Share()
-                share.add(lambdaOut1[i])
-                Output.append(share)
+            return [lambdaOut1]
 
         # Server 2's code
         if S.id() == 2:
         #Offline begins
             alpha = []
-            lambdaIn2 = []
-            mIn = []
+            lambdaIn2 = Input[0]
+            mIn = Input[1]
             lambdaOut2 = []
             mOut = []
-
-            for i in range(L):
-                shares = Input[i].get()
-                lambdaIn2.append(shares[0])
-                mIn.append(shares[1])
 
             # Generate lambdaOut2
             for _ in range(L):
@@ -353,13 +306,9 @@ class Shuffle:
                 mOutS2 = self.ArraySubtractF(P, temp1, lambdaOut2, S)
                 S.save_for_comm(1, mOutS2)
 
-            for i in range(L):
-                share = Share()
-                share.add(lambdaOut2[i])
-                Output.append(share)
-        return Output
+            return [lambdaOut2]
     
-    def optimizeHelpers(self, P: int, S: Server0 | Server1 | Server2, Serveri: int, Serverj: int, Output: list[Share], OutputF: list[Share]):
+    def optimizeHelpers(self, P: int, S: Server0 | Server1 | Server2, Serveri: int, Serverj: int, Output: list[list[bitarray]], OutputF: list[list[bitarray]]):
         if S.id() == 0:
             if Serveri == 0 and Serverj == 1:
                 p = S.get_saved(1)
@@ -423,12 +372,9 @@ class Shuffle:
                 mOutF = self.ArrayAddF(P, mOutS1F, mOutS2F, S)
                 mOut = self.ArrayXOR([mOutS1, mOutS2])
                 
-
-            for i in range(len(mOut)):
-                share = Output[i]
-                share.add(mOut[i])
-                shareF = OutputF[i]
-                shareF.add(mOutF[i])
+            Output.append(mOut)
+            OutputF.append(mOutF)
+            return Output, OutputF
                 
         if S.id() == 2:
             if Serveri == 0 and Serverj == 1:
@@ -481,11 +427,9 @@ class Shuffle:
                 mOut = self.ArrayXOR([mOutS1, mOutS2])
                 mOutF = self.ArrayAddF(P, mOutS1F, mOutS2F, S)
 
-            for i in range(len(mOut)):
-                share = Output[i]
-                share.add(mOut[i])
-                shareF = OutputF[i]
-                shareF.add(mOutF[i])
+            Output.append(mOut)
+            OutputF.append(mOutF)
+            return Output, OutputF
 
     def shuffle_offline(self, P:int, Input1: list[Share], Input2: list[Share], S: Server0 | Server1 | Server2):
         L = len(Input1)
@@ -495,12 +439,6 @@ class Shuffle:
         #Offline begins
             sigma01 = self.getrandompermutation(L)
             sigma02 = self.getrandompermutation(L)
-
-            # S1messenger = S.getnextmessenger()
-            # S2messenger = S.getprevmessenger()
-
-            # S1messenger.nextp_send(sigma01)
-            # S2messenger.prevp_send(sigma02)
 
             S.save_for_comm(0, sigma01)
             S.save_for_comm(0, sigma02)
@@ -514,23 +452,7 @@ class Shuffle:
 
             S.save_for_comm(0, sigma12)
 
-            # S2messenger.nextp_send(sigma12)
-            # sigma01 = S0messenger.prevp_receive()
-            # while sigma01 == None:
-            #     sigma01 = S0messenger.prevp_receive()
-
         if S.id() == 2:
-        #Offline begins
-            # S0messenger = S.getnextmessenger()
-            # S1messenger = S.getprevmessenger()
-
-            # sigma12 = S1messenger.prevp_receive()
-            # while sigma12 == None:
-            #     sigma12 = S1messenger.prevp_receive()
-
-            # sigma02 = S0messenger.nextp_receive()
-            # while sigma02 == None:
-            #     sigma02 = S0messenger.nextp_receive()
             pass
 
     def optimize_shuffle_offline(self, S: Server0 | Server1 | Server2):
@@ -599,14 +521,27 @@ class Shuffle:
         L = len(Input1)
         Output1 = []
         Output2 = []
+        ip1s0 = []
+        ip1s1 = []
+        ip2s0 = []
+        ip2s1 = []
+        for i in range(L):
+            s1 = Input1[i].get()
+            s2 = Input2[i].get()
+            ip1s0.append(s1[0])
+            ip1s1.append(s1[1])
+            ip2s0.append(s2[0])
+            ip2s1.append(s2[1])
         if S.id() == 0:
 
             sigma01 = S.get_saved(0)
             sigma02 = S.get_saved(0)
 
+
         #Online begins
-            temp11 = self.helper(Input1, S, 0, 1, sigma01.copy())
-            temp12 = self.helperF(P, Input2, S, 0, 1, sigma01.copy())
+            t1 = time()
+            temp11 = self.helper((ip1s0, ip1s1), S, 0, 1, sigma01.copy())
+            temp12 = self.helperF(P, (ip2s0, ip2s1), S, 0, 1, sigma01.copy())
             self.optimizeHelpers(P, S, 0, 1, temp11, temp12)
             temp21 = self.helper(temp11, S, 1, 2, None)
             temp22 = self.helperF(P, temp12, S, 1, 2, None)
@@ -620,31 +555,43 @@ class Shuffle:
             sigma12 = S.get_saved(0)
 
         #Online begins
-            temp11 = self.helper(Input1, S, 0, 1, sigma01.copy())
-            temp12 = self.helperF(P, Input2, S, 0, 1, sigma01.copy())
-            self.optimizeHelpers(P, S, 0, 1, temp11, temp12)
+            temp11 = self.helper((ip1s0, ip1s1), S, 0, 1, sigma01.copy())
+            temp12 = self.helperF(P, (ip2s0, ip2s1), S, 0, 1, sigma01.copy())
+            temp11, temp12 = self.optimizeHelpers(P, S, 0, 1, temp11, temp12)
             temp21 = self.helper(temp11, S, 1, 2, sigma12.copy())
             temp22 = self.helperF(P, temp12, S, 1, 2, sigma12.copy())
-            self.optimizeHelpers(P, S, 1, 2, temp21, temp22)
+            temp21, temp22 = self.optimizeHelpers(P, S, 1, 2, temp21, temp22)
             Output1 = self.helper(temp21, S, 0, 2, None)
             Output2 = self.helperF(P, temp22, S, 0, 2, None)
-            self.optimizeHelpers(P, S, 0, 2, Output1, Output2)
+            Output1, Output2 = self.optimizeHelpers(P, S, 0, 2, Output1, Output2)
 
         if S.id() == 2: 
             sigma02 = S.get_saved(0)
             sigma12 = S.get_saved(0)
 
         #Online begins
-            temp11 = self.helper(Input1, S, 0, 1, None)
-            temp12 = self.helperF(P, Input2, S, 0, 1, None)
-            self.optimizeHelpers(P, S, 0, 1, temp11, temp12)
+            temp11 = self.helper((ip1s0, ip1s1), S, 0, 1, None)
+            temp12 = self.helperF(P, (ip2s0, ip2s1), S, 0, 1, None)
+            temp11, temp12 = self.optimizeHelpers(P, S, 0, 1, temp11, temp12)
             temp21 = self.helper(temp11, S, 1, 2, sigma12.copy())
             temp22 = self.helperF(P, temp12, S, 1, 2, sigma12.copy())
-            self.optimizeHelpers(P, S, 1, 2, temp21, temp22)
+            temp21, temp22 = self.optimizeHelpers(P, S, 1, 2, temp21, temp22)
             Output1 = self.helper(temp21, S, 0, 2, sigma02.copy())
             Output2 = self.helperF(P, temp22, S, 0, 2, sigma02.copy())
-            self.optimizeHelpers(P, S, 0, 2, Output1, Output2)
-        return Output1, Output2
+            Output1, Output2 = self.optimizeHelpers(P, S, 0, 2, Output1, Output2)
+        op1 = []
+        op2 = []
+        for i in range(L):
+            s1 = Share()
+            s2 = Share()
+            s1.add(Output1[0][i])
+            s1.add(Output1[1][i])
+            s2.add(Output2[0][i])
+            s2.add(Output2[1][i])
+            op1.append(s1)
+            op2.append(s2)
+        return op1, op2
+        # return Output1, Output2
 
 if __name__ == "__main__":
     shuffle = Shuffle()

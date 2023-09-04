@@ -68,33 +68,33 @@ class Winnowing:
         vec1 = Counter(l1)
         vec2 = Counter(l2)
         
-        v1key = []
-        v1val = []
-        for k in vec1.keys():
-            v1key.append(k)
-            v1val.append(vec1[k])
-        print(v1key)
-        print(v1val)
+        # v1key = []
+        # v1val = []
+        # for k in vec1.keys():
+        #     v1key.append(k)
+        #     v1val.append(vec1[k])
+        # # print(v1key)
+        # # print(v1val)
         
-        v2key = []
-        v2val = []
-        for k in vec2.keys():
-            v2key.append(k)
-            v2val.append(vec2[k])
-        print(v2key)
-        print(v2val)
+        # v2key = []
+        # v2val = []
+        # for k in vec2.keys():
+        #     v2key.append(k)
+        #     v2val.append(vec2[k])
+        # print(v2key)
+        # print(v2val)
 
         intersection = set(vec1.keys()) & set(vec2.keys())
         
         
         numerator = sum([vec1[x] * vec2[x] for x in intersection])
-        print("numac", numerator)
+        # print("numac", numerator)
 
         sum1 = sum([vec1[x]**2 for x in vec1.keys()])
         sum2 = sum([vec2[x]**2 for x in vec2.keys()])
-        print("sumac", sum1, sum2)
+        # print("sumac", sum1, sum2)
         denominator = math.sqrt(sum1) * math.sqrt(sum2)
-        print("denomac", denominator)
+        # print("denomac", denominator)
 
         if not denominator:
             return 0.0
@@ -176,12 +176,13 @@ class Winnowing:
         program2 = p2
         fingerprints1_0 = self.generate_fingerprints((program1+"_lev0.txt"), 13, 17)
         fingerprints2_0 = self.generate_fingerprints((program2+"_lev0.txt"), 13, 17)
+        cosine_similarity_lev0 = self.cosine_similarity(fingerprints1_0, fingerprints2_0)
 
         vec1 = Counter(fingerprints1_0)
         vec2 = Counter(fingerprints2_0)
         
-        print(len(vec1))
-        print(len(vec2))  
+        print("\"Fingerprint1Len\": " + str(len(vec1)) + ",")
+        print("\"Fingerprint2Len\": " + str(len(vec2)) + ",")
         
         v1key = []
         v1val = []
@@ -207,6 +208,7 @@ class Winnowing:
         f0.close()
         f1.close()
         f2.close()
+        return cosine_similarity_lev0
 
     def winnowingFinal(self, p1, p2):
         program1 = p1

@@ -1,4 +1,4 @@
-# ASTRA_AES_Python
+# Secure Plagiarism Checker
 
 ## Instructions to run: 
 
